@@ -1,0 +1,21 @@
+{
+  "id": "cli:agent:get",
+  "result": {
+    "agent": {
+      "agent": "claude",
+      "agent_status": "working",
+      "cwd": "/home/user/projects/example",
+      "focused": false,
+      "foreground_cwd": "/home/user/projects/example",
+      "pane_id": "wB:p1",
+      "revision": 2,
+      "state_change_seq": 33,
+      "tab_id": "wB:t1",
+      "terminal_id": "term_0000000000000",
+      "terminal_title": "◑ Example task 3",
+      "terminal_title_stripped": "Example task 3",
+      "workspace_id": "wB"
+    },
+    "type": "agent_info"
+  }
+}

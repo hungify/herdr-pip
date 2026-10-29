@@ -1,0 +1,68 @@
+{
+  "id": "cli:workspace:list",
+  "result": {
+    "type": "workspace_list",
+    "workspaces": [
+      {
+        "active_tab_id": "w3:tP",
+        "agent_status": "unknown",
+        "focused": false,
+        "label": "project-1",
+        "number": 1,
+        "pane_count": 1,
+        "tab_count": 1,
+        "workspace_id": "w3"
+      },
+      {
+        "active_tab_id": "w7:tB",
+        "agent_status": "done",
+        "focused": false,
+        "label": "project-2",
+        "number": 2,
+        "pane_count": 3,
+        "tab_count": 3,
+        "workspace_id": "w7"
+      },
+      {
+        "active_tab_id": "w8:t1",
+        "agent_status": "unknown",
+        "focused": false,
+        "label": "project-3",
+        "number": 3,
+        "pane_count": 2,
+        "tab_count": 2,
+        "workspace_id": "w8"
+      },
+      {
+        "active_tab_id": "w9:t5",
+        "agent_status": "unknown",
+        "focused": false,
+        "label": "project-4",
+        "number": 4,
+        "pane_count": 3,
+        "tab_count": 3,
+        "workspace_id": "w9"
+      },
+      {
+        "active_tab_id": "wA:t1",
+        "agent_status": "working",
+        "focused": true,
+        "label": "project-5",
+        "number": 5,
+        "pane_count": 2,
+        "tab_count": 2,
+        "workspace_id": "wA"
+      },
+      {
+        "active_tab_id": "wB:t1",
+        "agent_status": "working",
+        "focused": false,
+        "label": "project-6",
+        "number": 6,
+        "pane_count": 1,
+        "tab_count": 1,
+        "workspace_id": "wB"
+      }
+    ]
+  }
+}
