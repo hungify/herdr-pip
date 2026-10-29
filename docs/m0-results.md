@@ -1,6 +1,6 @@
 # M0 results
 
-**Status: NOT RUN.** M0 needs Fedora GNOME on Wayland. This file is the empty test matrix; do not fill a cell without a run.
+**Status: NOT RUN.** The M0 code exists (see `docs/m0-howto.md`) but has not been run on any GNOME Shell. This file is the empty test matrix; do not fill a cell without a run.
 
 ## Environment (fill in)
 

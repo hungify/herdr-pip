@@ -6,14 +6,14 @@ while gaming, and pop open the **real Herdr terminal UI** with a hotkey.
 > **Not affiliated with Herdr.** Herdr is only invoked as an external CLI process. See [NOTICE.md](NOTICE.md).
 > Inspired by [finna/herdr-hud](https://github.com/finna/herdr-hud) (idea only, no code reused).
 
-## Status: research done, nothing implemented or tested yet
+## Status: M0 code written, **never run on GNOME**
 
 | Item | State |
 |---|---|
 | Herdr CLI JSON shapes | **Verified** on herdr 0.9.5 / macOS, sanitized in [`test/fixtures`](test/fixtures) |
 | Mutter stacks `above` windows over fullscreen | **Read in source (46-50), not tested** |
 | Hotkey works while a game inhibits shortcuts | **Unknown**, new risk found in research |
-| M0 (toggle + always-on-top terminal) | **Not started**; needs a Fedora GNOME machine |
+| M0 (toggle + always-on-top terminal) | **Code written, untested**. Pure helpers pass node unit tests; the Shell part is only syntax-checked. Follow [docs/m0-howto.md](docs/m0-howto.md) |
 | M1 (badge, prefs, polling) | **Blocked** until M0 is reviewed |
 
 Read [docs/research.md](docs/research.md) for findings and corrections to the original brief, and
@@ -30,10 +30,10 @@ Read [docs/research.md](docs/research.md) for findings and corrections to the or
 ## Layout
 
 ```
-gnome-extension/   GJS extension (empty until M0)
-scripts/           toggle / install / probe helpers (empty until M0)
-test/fixtures/     captured Herdr CLI output (sanitized)
-docs/              research, M0 results
+gnome-extension/   GJS extension (M0, untested) and pure helpers
+scripts/           install / devkit / toggle / probe / offline check
+test/              node unit tests and captured Herdr CLI fixtures (sanitized)
+docs/              research, M0 how-to, M0 results (empty matrix)
 ```
 
 ## Roadmap
