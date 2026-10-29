@@ -1,0 +1,8 @@
+{
+  "uuid": "herdr-pip@hungify",
+  "name": "Herdr PiP",
+  "description": "Hotkey toggles a terminal running Herdr that stays above other windows, including games. Spawns the terminal you have installed (foot, ghostty, kitty, ptyxis or gnome-terminal) to run the herdr CLI. Not affiliated with Herdr.",
+  "shell-version": ["49", "50"],
+  "settings-schema": "org.gnome.shell.extensions.herdr-pip",
+  "url": "https://github.com/hungify/herdr-pip"
+}
