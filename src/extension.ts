@@ -30,18 +30,25 @@ const DBUS_XML = `
 
 class HerdrPip {
     private readonly _ext: Extension;
-    private readonly _settings: Gio.Settings;
+    private _settingsRef: Gio.Settings | null;
     private readonly _settingsIds: number[];
-    private readonly _dbus: Gio.DBusExportedObject;
+    private _dbus: Gio.DBusExportedObject | null;
     private readonly _herdr: HerdrCli;
     private readonly _badge: OverlayBadge;
     private readonly _cancellable = new Gio.Cancellable();
     private _indicator: StatusIndicator | null = null;
     private _summary: Summary | null = null;
 
+    private get _settings(): Gio.Settings {
+        if (!this._settingsRef) {
+            throw new Error('herdr-pip: settings used after destroy');
+        }
+        return this._settingsRef;
+    }
+
     constructor(ext: Extension) {
         this._ext = ext;
-        this._settings = ext.getSettings();
+        this._settingsRef = ext.getSettings();
 
         this._badge = new OverlayBadge({
             onFocus: this._onFocus,
@@ -114,7 +121,9 @@ class HerdrPip {
         this._indicator?.destroy();
         this._indicator = null;
         this._cancellable.cancel();
-        this._dbus.unexport();
+        this._dbus?.unexport();
+        this._dbus = null;
+        this._settingsRef = null;
     }
 
     OpenMenu(): void {
