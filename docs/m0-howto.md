@@ -1,14 +1,14 @@
-# Running M0 on Fedora
+# Running herdr-pip on Fedora
 
-M0 code is written but **has never run on a real GNOME Shell**. Everything below is the procedure to
-run it and fill `docs/m0-results.md`. Expect to fix API details.
+How to build, try and install the extension; results are in `docs/m0-results.md`.
 
 ## 0. Prerequisites
 
 ```sh
-gnome-shell --version      # record it; edit gnome-extension/metadata.json "shell-version" to match
+gnome-shell --version      # record it; edit src/metadata.json "shell-version" to match
 herdr --version
-scripts/check.sh           # offline checks (needs node and glib-compile-schemas)
+pnpm install               # dev tooling: eslint, typescript, GNOME Shell 50 types
+scripts/check.sh           # lint, types, unit tests, build (needs node and glib-compile-schemas)
 ```
 
 If your GNOME version is not 49 or 50, update `shell-version` first, otherwise the Shell will not load the extension.
@@ -20,48 +20,74 @@ On a development release, list at most one.
 scripts/dev-install.sh
 ```
 
+This links both the extension and the test-only `herdr-pip-testkit@hungify` (left disabled; step 4 uses it).
 A newly linked extension is only seen by a Shell started afterwards.
 
-## 2. Try it in a nested shell first
+## 2. Try it in a test Shell first
+
+Headless needs nothing extra and touches nothing in your session (throwaway HOME, own session bus,
+leftover processes started with that HOME are killed on exit):
 
 ```sh
-scripts/run-devkit.sh      # GNOME 49+: --devkit (needs mutter-devkit). Older: --nested
-# in a terminal inside the nested session:
-gnome-extensions enable herdr-pip@hungify
+scripts/run-headless.sh                       # interactive shell talking to the headless Shell
+# inside it:
+ptyxis -s -x herdr &                         # a terminal running herdr (the window to jump to)
+ptyxis -s --fullscreen -T FULLSCREEN &       # a fullscreen window
+scripts/call.sh OpenMenu; scripts/testkit.sh DebugState
+scripts/testkit.sh Click 1655 60             # click the badge (test-only extension in test/headless-testkit)
+scripts/testkit.sh Screenshot /tmp/shot.png  # screenshot
+
+HERDR_PIP_FAKE_HERDR=1 HERDR_PIP_SETTINGS="poll-interval=1" scripts/run-headless.sh
+HERDR_PIP_MONITORS="1920x1080 2560x1440" scripts/run-headless.sh   # several virtual monitors
+# fake herdr: `agent list` prints test/fixtures/agent-list.synthetic-blocked.json,
+# or $HOME/fake-agent-list.json if you write one inside the headless shell;
+# `agent focus X` appends X to $HOME/fake-focus.log
+```
+
+Same isolation, but visible and interactive in a window on your desktop (GNOME 49+ replaced
+`--nested` with `--devkit`; `mutter-devkit` is a small package):
+
+```sh
+sudo dnf install mutter-devkit
+HERDR_PIP_DEVKIT=1 scripts/run-headless.sh
+# apps started from that prompt open inside the window, e.g. a fullscreen one:
+ptyxis -s -x herdr &
+ptyxis -s --fullscreen -T FULLSCREEN &
+# then click the badge inside the window
 ```
 
 Logs: `journalctl -f -o cat /usr/bin/gnome-shell` (look for `herdr-pip:`).
-The nested session cannot show a real fullscreen game over the real compositor, so it only proves load,
-launch, matching and focus return.
+A test Shell runs apart from your real session, so it proves load, badge, menu and focus only.
 
 ## 3. Real session
 
-Log out and in, then `gnome-extensions enable herdr-pip@hungify`. Press `Super+Shift+H` (or `scripts/toggle.sh`).
+Log out and in, then `gnome-extensions enable herdr-pip@hungify`. Keep herdr running in a terminal as usual.
+Click the badge (top right) or press `Super+Shift+H`, pick an agent.
 
-Settings (no prefs UI yet, M1):
+Settings: `gnome-extensions prefs herdr-pip@hungify`. From a shell:
 
 ```sh
-gsettings --schemadir gnome-extension/schemas set org.gnome.shell.extensions.herdr-pip terminal foot
-gsettings --schemadir gnome-extension/schemas set org.gnome.shell.extensions.herdr-pip session work
+gsettings --schemadir build/herdr-pip@hungify/schemas set org.gnome.shell.extensions.herdr-pip session work
+gsettings --schemadir build/herdr-pip@hungify/schemas set org.gnome.shell.extensions.herdr-pip overlay-badge attention
 ```
 
-## 4. Fill the matrix
+Instead of the symlink you can install the zip: `pnpm run pack`, then
+`gnome-extensions install --force dist/herdr-pip@hungify.shell-extension.zip`.
 
-In a second terminal run `scripts/fullscreen-probe.sh` to log `above`, `minimized`, `hasFocus`, `onAllWorkspaces`
-and the focused window's `fullscreen` flag. For each row of `docs/m0-results.md` run the game and check:
+## 4. Inspect the running badge
 
-- **A above the game**: press the hotkey; do you see the panel, and does the probe say `above: true`?
-- **B can type**: type into Herdr.
-- **C focus returns**: press the hotkey again; does the game receive keys, and does the probe's `focus` show the game?
-- **D no leak**: while hidden, do keys or the mouse reach the game as normal and nothing else?
-- **E hotkey works under inhibit**: with the game focused, does `Super+Shift+H` fire? If not, try `scripts/toggle.sh`
-  from another device/session, and note whether `Super+Esc` restores the shortcut.
+`scripts/fullscreen-probe.sh` (in a second terminal) logs once a second the badge state, the herdr window it would
+raise and the focused window. It enables the test-only testkit extension while it runs, for its `DebugState`, and
+disables it again on exit. While it is enabled, any process in your session can also take screenshots and inject
+pointer clicks and drags through the testkit's D-Bus methods, so do not leave it running.
 
-## Known gaps in the M0 code (things most likely to need a fix)
+## Known gaps
 
-- Window placement is applied once, right after the new window is adopted; Mutter may ignore it on an unmapped window.
-- If `_show()` is called before the window maps, `activate()` may be refused by focus-stealing prevention.
-- Matching relies on the app id. Ptyxis has no app id option, so it matches by title, and Herdr may overwrite the title.
-- Terminal flags (`foot --app-id`, `kitty --class`, `ghostty --class=`, `ptyxis -x`, `gnome-terminal --`) are from docs/source, not run.
-- `disable()` leaves the terminal running; it only removes above/sticky.
-- No prefs UI, no badge, no polling: those are M1.
+- The herdr window is found through `/proc` process ancestry. A herdr client inside tmux, ssh or a terminal that
+  hands its children to a separate server process (gnome-terminal-server) is not found; you then get a notification.
+- With several windows of a single-instance terminal (ghostty, Ptyxis) the one titled "herdr" wins, else the
+  most recently used window of that terminal.
+- The badge stays where it was dragged to, on that monitor (saved by connector name); by default the top-right
+  corner of the primary monitor. It is placed in the monitor's work area, so over a fullscreen window it sits one
+  top-bar height below the screen edge. A fullscreen window on the other monitor is not covered by it.
+- A fullscreen app can keep `Super+Shift+H` from reaching the Shell; `scripts/call.sh OpenMenu` is the fallback.

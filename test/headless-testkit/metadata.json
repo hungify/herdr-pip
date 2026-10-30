@@ -1,0 +1,6 @@
+{
+  "uuid": "herdr-pip-testkit@hungify",
+  "name": "Herdr PiP headless testkit",
+  "description": "Test-only helper: loaded by scripts/run-headless.sh, and enabled by scripts/fullscreen-probe.sh only while it runs. Do not leave it enabled in a real session.",
+  "shell-version": ["49", "50"]
+}

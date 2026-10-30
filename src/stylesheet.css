@@ -1,0 +1,70 @@
+.herdr-pip-pill {
+  border-radius: 999px;
+  padding: 0 6px;
+  font-size: 0.85em;
+  font-weight: bold;
+  color: #ffffff;
+  background-color: #5e5c64;
+}
+
+.herdr-pip-blocked {
+  background-color: #c01c28;
+}
+.herdr-pip-done {
+  background-color: #26a269;
+}
+.herdr-pip-working {
+  background-color: #1c71d8;
+}
+.herdr-pip-idle,
+.herdr-pip-unknown {
+  background-color: #5e5c64;
+}
+
+.herdr-pip-overlay {
+  color: #ffffff;
+  font-weight: 800;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.45);
+  border: 2px solid rgba(255, 255, 255, 0.85);
+  box-shadow: 0 3px 10px 1px rgba(0, 0, 0, 0.55);
+}
+
+.herdr-pip-overlay:hover,
+.herdr-pip-overlay:focus {
+  border-color: #ffffff;
+  box-shadow: 0 3px 14px 3px rgba(0, 0, 0, 0.6);
+}
+
+.herdr-pip-overlay:active {
+  box-shadow: 0 1px 6px 0 rgba(0, 0, 0, 0.55);
+}
+
+.herdr-pip-dot {
+  border: 2px solid #ffffff;
+  box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.5);
+}
+
+.herdr-pip-indicator-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 3px;
+}
+
+.herdr-pip-toast {
+  padding: 8px 14px;
+  border-radius: 12px;
+  color: #ffffff;
+  background-color: rgba(36, 31, 49, 0.92);
+  border: 2px solid rgba(255, 255, 255, 0.18);
+}
+
+.herdr-pip-toast-blocked {
+  border-color: #c01c28;
+}
+.herdr-pip-toast-done {
+  border-color: #26a269;
+}
+
+.herdr-pip-toast-label {
+  font-weight: bold;
+}

@@ -1,40 +1,105 @@
 # herdr-pip
 
-An always-on-top overlay for [Herdr](https://herdr.dev) on **Fedora GNOME (Wayland)**: glance at agent status
-while gaming, and pop open the **real Herdr terminal UI** with a hotkey.
+A floating badge for [Herdr](https://herdr.dev) on **Fedora GNOME (Wayland)**: glance at agent status from
+any app, fullscreen ones included, click it to pick an agent, and land in your **own Herdr terminal window** on that
+agent.
 
 > **Not affiliated with Herdr.** Herdr is only invoked as an external CLI process. See [NOTICE.md](NOTICE.md).
 > Inspired by [finna/herdr-hud](https://github.com/finna/herdr-hud) (idea only, no code reused).
 
-## Status: M0 code written, **never run on GNOME**
+## Status: works on GNOME Shell 50.6 (Fedora, Wayland)
 
 | Item | State |
 |---|---|
-| Herdr CLI JSON shapes | **Verified** on herdr 0.9.5 / macOS, sanitized in [`test/fixtures`](test/fixtures) |
-| Mutter stacks `above` windows over fullscreen | **Read in source (46-50), not tested** |
-| Hotkey works while a game inhibits shortcuts | **Unknown**, new risk found in research |
-| M0 (toggle + always-on-top terminal) | **Code written, untested**. Pure helpers pass node unit tests; the Shell part is only syntax-checked. Follow [docs/m0-howto.md](docs/m0-howto.md) |
-| M1 (badge, prefs, polling) | **Blocked** until M0 is reviewed |
+| Herdr CLI JSON shapes | **Verified** on herdr 0.9.5 (macOS capture, same output on Fedora), sanitized in [`test/fixtures`](test/fixtures) |
+| Badge visible over a fullscreen window, clicks only inside the badge | **Works**, see [docs/m0-results.md](docs/m0-results.md) |
+| Click badge > pick agent > `herdr agent focus` + raise the herdr window | **Works** (real pointer clicks), see [docs/m0-results.md](docs/m0-results.md) |
 
-Read [docs/research.md](docs/research.md) for findings and corrections to the original brief, and
-[docs/m0-results.md](docs/m0-results.md) for the (empty) test matrix.
+Try it: see Development below, or [docs/m0-howto.md](docs/m0-howto.md) for the real session.
+[docs/research.md](docs/research.md) has the pre-M0 findings.
 
 ## Design (decided)
 
-1. The panel is a terminal running `herdr` (or `--session <name>` / `--remote <host>`). No custom chat UI.
-2. Only integration surface: Herdr's public CLI, as a separate process.
-3. Phase 1: GNOME Shell extension in GJS (ESM, GNOME 45+), kept thin.
-4. Always-on-top is done inside the compositor: the extension finds the terminal window and calls
-   `Meta.Window.make_above()` / `stick()`.
+1. A floating badge, not a panel: a small "H" circle, always on top (Shell chrome, so it stays over fullscreen
+   windows). A 2 px progress ring around it plays the latest status changes one at a time, like a queue
+   (blue arc spinning: an agent started working; green ring filling: one is done; red ring pulsing: one is
+   blocked; 3 s each), and spins while any agent works. A dot shows that an agent is blocked (red) or done
+   (green); the agents themselves are in its menu. The optional top bar icon is the same "H" mark with the same dot.
+   It takes clicks only inside itself and stays where you put it: drag it anywhere, also onto another monitor
+   (remembered; by default the top-right corner of the primary monitor).
+2. When an agent becomes done or blocked, a toast appears next to the badge for a few seconds, also over
+   fullscreen windows (GNOME holds its own banners back there). Clicking it jumps to that agent.
+   Everything is adjustable in Settings (`gnome-extensions prefs herdr-pip@hungify`): badge size, color,
+   opacity and dot, which statuses toast and for how long, session, poll interval.
+3. Clicking the badge (or `Super+Shift+H`) lists the agents. Picking one runs `herdr agent focus <pane>` and raises the
+   terminal window where your herdr client already runs (found by walking up from the client's process to the
+   process that owns a window). **No terminal is launched** and there is no custom chat UI.
+4. Only integration surface: Herdr's public CLI, as a separate process (`agent list` polling, `agent focus`).
+5. GNOME Shell extension (GNOME 49/50), written in TypeScript and compiled to GJS ES modules, kept thin.
+
+Changed on 2026-10-30: the first version launched its own terminal running `herdr` and kept it above other
+windows (`make_above()`). That was dropped in favour of the badge; see [docs/m0-results.md](docs/m0-results.md).
 
 ## Layout
 
 ```
-gnome-extension/   GJS extension (M0, untested) and pure helpers
-scripts/           install / devkit / toggle / probe / offline check
-test/              node unit tests and captured Herdr CLI fixtures (sanitized)
-docs/              research, M0 how-to, M0 results (empty matrix)
+src/               the extension in TypeScript (strict), plus metadata.json, stylesheet.css, schemas/; see src/README.md
+build/             compiled extension (git-ignored); this is what GNOME Shell loads and what ships
+scripts/           build / install / pack / test Shell / D-Bus calls / probe / check
+test/              node unit tests (TypeScript), Herdr CLI fixtures (sanitized), fake herdr, headless testkit
+types/             ambient types for gi:// and Shell modules (@girs/gnome-shell 50)
+docs/              research, how-to, results
 ```
+
+## Development
+
+The code is TypeScript with every strictness flag on (`tsconfig.base.json`: `strict`,
+`noUncheckedIndexedAccess`, `exactOptionalPropertyTypes`, `noPropertyAccessFromIndexSignature`, ...) and
+type-aware lint (`typescript-eslint` strict + stylistic type-checked). Formatting is oxfmt's (`.oxfmtrc.json`: 4
+spaces, single quotes, no bracket spacing, 120 columns); `pnpm lint` runs oxlint first (`.oxlintrc.json`), then
+ESLint for the type-aware rules, with the rules oxlint already covers turned off in ESLint. Each code directory has its own
+`tsconfig.json` (`src/`, `test/`, `test/headless-testkit/`) extending `tsconfig.base.json`; the root one only covers
+`eslint.config.ts` (loaded by ESLint through `jiti`). Package manager: pnpm (`packageManager` in
+`package.json`). `tsc` compiles `src/` into readable ES modules in `build/herdr-pip@hungify/`; sources import each other as `./herdr.ts`, rewritten to
+`./herdr.js` on build. Pure modules (`herdr.ts`, `appearance.ts`, `ring.ts`, `placement.ts`) have no `gi://` imports, so the
+unit tests run them directly with node's type stripping.
+
+One-time setup:
+
+```sh
+pnpm install                     # typescript, typescript-eslint, @girs types; nothing here ships
+sudo dnf install mutter-devkit   # only for `pnpm dev` (a visible test Shell, GNOME 49+)
+```
+
+GNOME Shell cannot reload an extension's code in a running Shell (on Wayland the real session needs a
+log out). So develop against a throwaway Shell instead and restart it after each change; it takes a few seconds:
+
+| Command | What it does |
+|---|---|
+| `pnpm build` | Compile `src/` into `build/` (the `dev*`, `pack` and install scripts do this first) |
+| `pnpm dev` | Test Shell in a window on your desktop (devkit), with your real `herdr` in a throwaway HOME |
+| `pnpm dev:fake` | Same, with `test/fake-herdr.sh`, so the badge shows blocked / done / working |
+| `pnpm dev:headless` | No window; drive it with `scripts/call.sh` and `scripts/testkit.sh Click X Y` / `Drag X1 Y1 X2 Y2`, look with `scripts/testkit.sh Screenshot /abs/shot.png` and `scripts/testkit.sh DebugState` |
+| `pnpm check` | Format check + oxlint + ESLint + typecheck + unit tests + build (schema compiled `--strict`), same as CI |
+| `pnpm format` | Format the code with oxfmt (`pnpm format:check` only checks) |
+| `pnpm smoke` | End-to-end check in a headless Shell with the fake herdr (~10 s): counts, menu by D-Bus and by a real click, focus, drag and reset, toast, top bar icon, herdr missing, 5 disable/enable cycles, D-Bus interface gone after disable, no `JS ERROR`/`JS WARNING` in the log |
+| `scripts/check-herdr.sh` | After updating herdr: checks `herdr api schema --json`, the fixtures and a live `agent list` against what `src/herdr.ts` reads |
+| `pnpm run pack` | Build `dist/herdr-pip@hungify.shell-extension.zip` from `build/` (plus translations from `po/*.po`) |
+| `pnpm pot` | Extract translatable strings into `po/herdr-pip.pot` |
+
+Each `dev*` command opens a prompt connected to the test Shell and prints the extension's log lines
+(`herdr-pip:`, `JS ERROR`) as they happen. Typical loop:
+
+1. Edit code under `src/`.
+2. `pnpm check` (seconds; catches most mistakes before a Shell is involved), then `pnpm smoke` for the Shell side.
+3. `pnpm dev:fake`, then at its prompt: `ptyxis -s -x herdr &` (a terminal running the fake herdr client),
+   `ptyxis -s --fullscreen -T FULLSCREEN &` (a fullscreen window), then click the badge in the window (or `scripts/call.sh`).
+4. `exit` and run it again after the next change. Everything it started is cleaned up.
+
+Settings (`prefs.ts`) run in their own process: after `pnpm build`, `gnome-extensions prefs herdr-pip@hungify`
+inside the test Shell picks up changes without restarting it.
+
+The real-session procedure is in [docs/m0-howto.md](docs/m0-howto.md).
 
 ## Roadmap
 

@@ -1,0 +1,135 @@
+import Gio from 'gi://Gio';
+import GLib from 'gi://GLib';
+
+import {herdrCommand, summarize} from './herdr.ts';
+import type {Summary} from './herdr.ts';
+
+const POLL_TIMEOUT_US = 10 * GLib.USEC_PER_SEC;
+
+function errorMessage(e: unknown): string {
+    return e instanceof Error ? e.message : String(e);
+}
+
+function findHerdr(): string | null {
+    const local = GLib.build_filenamev([GLib.get_home_dir(), '.local', 'bin', 'herdr']);
+    return GLib.find_program_in_path('herdr') ?? (GLib.file_test(local, GLib.FileTest.IS_EXECUTABLE) ? local : null);
+}
+
+export class HerdrCli {
+    private readonly _session: () => string;
+    private readonly _onSummary: (summary: Summary) => void;
+    private readonly _cancellable = new Gio.Cancellable();
+    private readonly _procs = new Set<Gio.Subprocess>();
+    private _sourceId = 0;
+    private _poll: Gio.Subprocess | null = null;
+    private _pollStartedAt = 0;
+
+    constructor(session: () => string, onSummary: (summary: Summary) => void) {
+        this._session = session;
+        this._onSummary = onSummary;
+    }
+
+    destroy(): void {
+        this._stopTimer();
+        this._cancellable.cancel();
+        this._poll?.force_exit();
+        this._poll = null;
+        for (const proc of this._procs) {
+            proc.force_exit();
+        }
+        this._procs.clear();
+    }
+
+    start(seconds: number): void {
+        this._stopTimer();
+        this._sourceId = GLib.timeout_add_seconds(GLib.PRIORITY_DEFAULT, seconds, () => {
+            this.poll();
+            return GLib.SOURCE_CONTINUE;
+        });
+        this.poll();
+    }
+
+    poll(): void {
+        if (this._poll) {
+            if (GLib.get_monotonic_time() - this._pollStartedAt > POLL_TIMEOUT_US) {
+                this._poll.force_exit();
+            }
+            return;
+        }
+        const argv = this._argv('agent', 'list');
+        if (!argv) {
+            this._onSummary(summarize({missing: true}));
+            return;
+        }
+
+        let proc: Gio.Subprocess;
+        try {
+            proc = Gio.Subprocess.new(argv, Gio.SubprocessFlags.STDOUT_PIPE | Gio.SubprocessFlags.STDERR_PIPE);
+        } catch (e) {
+            this._onSummary(summarize({exitOk: false, stderr: errorMessage(e)}));
+            return;
+        }
+        this._poll = proc;
+        this._pollStartedAt = GLib.get_monotonic_time();
+
+        proc.communicate_utf8_async(null, this._cancellable, (_source, res) => {
+            let stdout = '',
+                stderr: string,
+                exitOk = false;
+            try {
+                const [, out, err] = proc.communicate_utf8_finish(res) as [boolean, string | null, string | null];
+                stdout = out ?? '';
+                stderr = err ?? '';
+                exitOk = proc.get_successful();
+            } catch (e) {
+                if (e instanceof GLib.Error && e.matches(Gio.IOErrorEnum, Gio.IOErrorEnum.CANCELLED)) {
+                    return;
+                }
+                stderr = errorMessage(e);
+            }
+            if (this._poll === proc) {
+                this._poll = null;
+            }
+            this._onSummary(summarize({exitOk, stdout, stderr}));
+        });
+    }
+
+    focus(paneId: string): boolean {
+        const argv = this._argv('agent', 'focus', paneId);
+        if (!argv) {
+            return false;
+        }
+        let proc: Gio.Subprocess;
+        try {
+            proc = Gio.Subprocess.new(argv, Gio.SubprocessFlags.STDOUT_SILENCE);
+        } catch (e) {
+            console.error(`herdr-pip: failed to run ${argv[0] ?? '?'}: ${errorMessage(e)}`);
+            return true;
+        }
+        this._procs.add(proc);
+        proc.wait_check_async(this._cancellable, (_source, res) => {
+            this._procs.delete(proc);
+            try {
+                proc.wait_check_finish(res);
+            } catch (e) {
+                if (e instanceof GLib.Error && e.matches(Gio.IOErrorEnum, Gio.IOErrorEnum.CANCELLED)) {
+                    return;
+                }
+                console.error(`herdr-pip: agent focus ${paneId} failed: ${errorMessage(e)}`);
+            }
+        });
+        return true;
+    }
+
+    private _argv(...args: string[]): string[] | null {
+        const herdr = findHerdr();
+        return herdr !== null ? herdrCommand(herdr, this._session(), ...args) : null;
+    }
+
+    private _stopTimer(): void {
+        if (this._sourceId) {
+            GLib.source_remove(this._sourceId);
+            this._sourceId = 0;
+        }
+    }
+}
