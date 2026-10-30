@@ -4,7 +4,11 @@ set -euo pipefail
 source "$(dirname "${BASH_SOURCE[0]}")/lib.sh"
 
 "$REPO_ROOT/scripts/build.sh" >/dev/null
-src="$REPO_ROOT/build/$UUID"
+stage="$(mktemp -d)"
+trap 'rm -rf "$stage"' EXIT
+src="$stage/$UUID"
+cp -r "$REPO_ROOT/build/$UUID" "$src"
+rm -f "$src/schemas/gschemas.compiled"
 extra=()
 for f in "$src"/*.js; do
     case "$(basename "$f")" in
