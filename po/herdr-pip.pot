@@ -1,0 +1,231 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) YEAR THE PACKAGE'S COPYRIGHT HOLDER
+# This file is distributed under the same license as the herdr-pip package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: herdr-pip\n"
+"Report-Msgid-Bugs-To: https://github.com/hungify/herdr-pip/issues\n"
+"POT-Creation-Date: 2026-10-30 21:23+0700\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: LANGUAGE <LL@li.org>\n"
+"Language: \n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=CHARSET\n"
+"Content-Transfer-Encoding: 8bit\n"
+
+#: build/herdr-pip@hungify/badge.js
+msgid "Herdr agents"
+msgstr ""
+
+#: build/herdr-pip@hungify/badge.js
+#, javascript-format
+msgid "(+%d more)"
+msgstr ""
+
+#: build/herdr-pip@hungify/extension.js
+msgid "herdr was not found in PATH or ~/.local/bin"
+msgstr ""
+
+#: build/herdr-pip@hungify/extension.js
+msgid "Could not start herdr. See the Shell log for details."
+msgstr ""
+
+#: build/herdr-pip@hungify/extension.js
+msgid "Herdr is not open in a terminal window. Run herdr in a terminal first."
+msgstr ""
+
+#: build/herdr-pip@hungify/herdr.js
+msgid "blocked"
+msgstr ""
+
+#: build/herdr-pip@hungify/herdr.js
+msgid "done"
+msgstr ""
+
+#: build/herdr-pip@hungify/herdr.js
+msgid "working"
+msgstr ""
+
+#: build/herdr-pip@hungify/herdr.js
+msgid "idle"
+msgstr ""
+
+#: build/herdr-pip@hungify/herdr.js
+msgid "unknown"
+msgstr ""
+
+#: build/herdr-pip@hungify/herdr.js
+msgid "No agents"
+msgstr ""
+
+#: build/herdr-pip@hungify/herdr.js
+msgid "Herdr is not running"
+msgstr ""
+
+#: build/herdr-pip@hungify/herdr.js
+msgid "herdr not found"
+msgstr ""
+
+#: build/herdr-pip@hungify/herdr.js
+msgid "Waiting for the first poll"
+msgstr ""
+
+#: build/herdr-pip@hungify/herdr.js
+#, javascript-format
+msgid "%s is done"
+msgstr ""
+
+#: build/herdr-pip@hungify/herdr.js
+#, javascript-format
+msgid "%s needs you"
+msgstr ""
+
+#: build/herdr-pip@hungify/indicator.js
+msgid "Settings"
+msgstr ""
+
+#: build/herdr-pip@hungify/prefs.js
+msgid "Always"
+msgstr ""
+
+#: build/herdr-pip@hungify/prefs.js
+msgid "Blocked or done"
+msgstr ""
+
+#: build/herdr-pip@hungify/prefs.js
+msgid "Never"
+msgstr ""
+
+#: build/herdr-pip@hungify/prefs.js
+msgid "Agent menu shortcut (Enter to apply)"
+msgstr ""
+
+#: build/herdr-pip@hungify/prefs.js
+msgid "Reset"
+msgstr ""
+
+#: build/herdr-pip@hungify/prefs.js
+msgid "Badge"
+msgstr ""
+
+#: build/herdr-pip@hungify/prefs.js
+msgid ""
+"Click the badge to pick an agent: Herdr focuses it and its terminal window "
+"is raised. Drag the badge to move it."
+msgstr ""
+
+#: build/herdr-pip@hungify/prefs.js
+msgid "Floats over fullscreen windows"
+msgstr ""
+
+#: build/herdr-pip@hungify/prefs.js
+msgid "Show the badge"
+msgstr ""
+
+#: build/herdr-pip@hungify/prefs.js
+msgid "Back to the top-right corner of the primary monitor"
+msgstr ""
+
+#: build/herdr-pip@hungify/prefs.js
+msgid "Position"
+msgstr ""
+
+#: build/herdr-pip@hungify/prefs.js
+msgid "Look"
+msgstr ""
+
+#: build/herdr-pip@hungify/prefs.js
+msgid "Diameter in pixels"
+msgstr ""
+
+#: build/herdr-pip@hungify/prefs.js
+msgid "Size"
+msgstr ""
+
+#: build/herdr-pip@hungify/prefs.js
+msgid "Background color"
+msgstr ""
+
+#: build/herdr-pip@hungify/prefs.js
+msgid "Background opacity"
+msgstr ""
+
+#: build/herdr-pip@hungify/prefs.js
+msgid "Percent"
+msgstr ""
+
+#: build/herdr-pip@hungify/prefs.js
+msgid "Attention dot"
+msgstr ""
+
+#: build/herdr-pip@hungify/prefs.js
+msgid "Red when an agent is blocked, green when one is done"
+msgstr ""
+
+#: build/herdr-pip@hungify/prefs.js
+msgid "Progress ring"
+msgstr ""
+
+#: build/herdr-pip@hungify/prefs.js
+msgid ""
+"Spins while an agent works, fills green when one is done, pulses red when "
+"one is blocked"
+msgstr ""
+
+#: build/herdr-pip@hungify/prefs.js
+msgid "Default look"
+msgstr ""
+
+#: build/herdr-pip@hungify/prefs.js
+msgid "Toast"
+msgstr ""
+
+#: build/herdr-pip@hungify/prefs.js
+msgid ""
+"A short message next to the badge, also over fullscreen windows. Click it to "
+"jump to the agent."
+msgstr ""
+
+#: build/herdr-pip@hungify/prefs.js
+msgid "Show toasts"
+msgstr ""
+
+#: build/herdr-pip@hungify/prefs.js
+msgid "When an agent is done"
+msgstr ""
+
+#: build/herdr-pip@hungify/prefs.js
+msgid "When an agent needs you (blocked)"
+msgstr ""
+
+#: build/herdr-pip@hungify/prefs.js
+msgid "Seconds"
+msgstr ""
+
+#: build/herdr-pip@hungify/prefs.js
+msgid "Stays for"
+msgstr ""
+
+#: build/herdr-pip@hungify/prefs.js
+msgid "Herdr"
+msgstr ""
+
+#: build/herdr-pip@hungify/prefs.js
+msgid "Polls \"herdr agent list\"."
+msgstr ""
+
+#: build/herdr-pip@hungify/prefs.js
+msgid "Session, empty for the default (Enter to apply)"
+msgstr ""
+
+#: build/herdr-pip@hungify/prefs.js
+msgid "Poll interval"
+msgstr ""
+
+#: build/herdr-pip@hungify/prefs.js
+msgid "Also show in the top bar"
+msgstr ""
