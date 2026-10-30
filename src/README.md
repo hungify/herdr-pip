@@ -1,7 +1,7 @@
 # src
 
 GNOME Shell 49/50 extension in TypeScript, compiled by `scripts/build.sh` into `build/herdr-pip@hungify/`.
-Tested on GNOME Shell 50.6 (see `docs/m0-results.md`).
+Tested on GNOME Shell 50.6.
 
 Pure modules (no `gi://` imports, unit-tested under node):
 
@@ -47,4 +47,4 @@ External trigger (for when a fullscreen app keeps the shortcut from reaching the
 scripts/call.sh                  # OpenMenu (default) | Focus <pane_id>
 ```
 
-See `docs/m0-howto.md`.
+See "Install in your real session" in the top-level README.

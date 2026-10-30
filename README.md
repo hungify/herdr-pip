@@ -12,11 +12,10 @@ agent.
 | Item | State |
 |---|---|
 | Herdr CLI JSON shapes | **Verified** on herdr 0.9.5 (macOS capture, same output on Fedora), sanitized in [`test/fixtures`](test/fixtures) |
-| Badge visible over a fullscreen window, clicks only inside the badge | **Works**, see [docs/m0-results.md](docs/m0-results.md) |
-| Click badge > pick agent > `herdr agent focus` + raise the herdr window | **Works** (real pointer clicks), see [docs/m0-results.md](docs/m0-results.md) |
+| Badge visible over a fullscreen window, clicks only inside the badge | **Works** (headless Shell 50.6 and real session) |
+| Click badge > pick agent > `herdr agent focus` + raise the herdr window | **Works** (real pointer clicks, `pnpm smoke`) |
 
-Try it: see Development below, or [docs/m0-howto.md](docs/m0-howto.md) for the real session.
-[docs/research.md](docs/research.md) has the pre-M0 findings.
+Try it: see Development below.
 
 ## Design (decided)
 
@@ -38,7 +37,7 @@ Try it: see Development below, or [docs/m0-howto.md](docs/m0-howto.md) for the r
 5. GNOME Shell extension (GNOME 49/50), written in TypeScript and compiled to GJS ES modules, kept thin.
 
 Changed on 2026-10-30: the first version launched its own terminal running `herdr` and kept it above other
-windows (`make_above()`). That was dropped in favour of the badge; see [docs/m0-results.md](docs/m0-results.md).
+windows (`make_above()`). That was dropped in favour of the badge (still in git history, commit deb35b5).
 
 ## Layout
 
@@ -48,7 +47,6 @@ build/             compiled extension (git-ignored); this is what GNOME Shell lo
 scripts/           build / install / pack / test Shell / D-Bus calls / probe / check
 test/              node unit tests (TypeScript), Herdr CLI fixtures (sanitized), fake herdr, headless testkit
 types/             ambient types for gi:// and Shell modules (@girs/gnome-shell 50)
-docs/              research, how-to, results
 ```
 
 ## Development
@@ -87,6 +85,15 @@ log out). So develop against a throwaway Shell instead and restart it after each
 | `pnpm run pack` | Build `dist/herdr-pip@hungify.shell-extension.zip` from `build/` (plus translations from `po/*.po`) |
 | `pnpm pot` | Extract translatable strings into `po/herdr-pip.pot` |
 
+Options for the test Shell (`pnpm dev*` and `scripts/run-headless.sh`):
+
+- `HERDR_PIP_SETTINGS="poll-interval=1"`: settings applied before the extension starts.
+- `HERDR_PIP_MONITORS="1920x1080 2560x1440"`: several virtual monitors.
+
+The fake herdr prints `test/fixtures/agent-list.synthetic-blocked.json` for `agent list`, or
+`$HOME/fake-agent-list.json` if you write one inside the test Shell. `agent focus X` appends X to
+`$HOME/fake-focus.log`.
+
 Each `dev*` command opens a prompt connected to the test Shell and prints the extension's log lines
 (`herdr-pip:`, `JS ERROR`) as they happen. Typical loop:
 
@@ -118,12 +125,29 @@ Why not a symlink (`scripts/dev-install.sh`): every `pnpm build`/`check`/`smoke`
 Shell ends up with old code and a new schema. It then fails on the next enable with errors like
 `GSettings key ... not found` (State: ERROR) until you log out. Use the symlink only if you log out after each build.
 
+Settings: `gnome-extensions prefs herdr-pip@hungify`, or from a shell, for example
+`gsettings --schemadir ~/.local/share/gnome-shell/extensions/herdr-pip@hungify/schemas set org.gnome.shell.extensions.herdr-pip session work`.
+
+To watch the running badge, run `scripts/fullscreen-probe.sh` in a second terminal. Once a second it logs the badge
+state, the herdr window it would raise and the focused window. It needs the test-only testkit
+(`scripts/dev-install.sh --with-testkit`), enables it while it runs and disables it on exit. While the testkit is
+enabled, any process in your session can take screenshots and inject clicks through it, so remove it when done.
+
 Uninstall: `gnome-extensions uninstall herdr-pip@hungify`. If it fails:
 
 - **State: ERROR:** run `journalctl --user -b -o cat | grep -A4 herdr-pip@hungify` to see the error.
 - **Extension not loaded at all:** check that `shell-version` in `src/metadata.json` matches `gnome-shell --version`.
 
-The full real-session test procedure, including the fullscreen probe, is in [docs/m0-howto.md](docs/m0-howto.md).
+### Known gaps
+
+- The herdr window is found through `/proc` process ancestry. It is not found for a herdr client inside tmux, screen
+  or ssh, for a Flatpak terminal using `flatpak-spawn --host`, or for a terminal that hands its children to a
+  separate server process (gnome-terminal-server). You then get a notification.
+- With several windows of a single-instance terminal (ghostty, Ptyxis), the one titled "herdr" wins. Otherwise the
+  most recently used window of that terminal is raised.
+- The badge sits in the monitor's work area, so over a fullscreen window it is one top-bar height below the screen
+  edge. A fullscreen window on another monitor is not covered by it.
+- A fullscreen app can keep `Super+Shift+H` from reaching the Shell. Use `scripts/call.sh OpenMenu` instead.
 
 ## Roadmap
 
