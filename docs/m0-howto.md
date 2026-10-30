@@ -25,6 +25,9 @@ The testkit is left disabled. While enabled it exposes Screenshot/Click/Drag on 
 `scripts/dev-install.sh` again without the flag to remove it when done.
 A newly linked extension is only seen by a Shell started afterwards.
 
+The symlink points at `build/`, so log out after every build: a running Shell with old code and a new schema
+fails with State: ERROR. For everyday use install the zip instead (see "Install in your real session" in the README).
+
 ## 2. Try it in a test Shell first
 
 Headless needs nothing extra and touches nothing in your session (throwaway HOME, own session bus,
@@ -74,7 +77,8 @@ gsettings --schemadir build/herdr-pip@hungify/schemas set org.gnome.shell.extens
 ```
 
 Instead of the symlink you can install the zip: `pnpm run pack`, then
-`gnome-extensions install --force dist/herdr-pip@hungify.shell-extension.zip`.
+`gnome-extensions install --force dist/herdr-pip@hungify.shell-extension.zip`. Remove the symlinks in
+`~/.local/share/gnome-shell/extensions/` first, then log out and back in.
 
 ## 4. Inspect the running badge
 

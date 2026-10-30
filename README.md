@@ -99,7 +99,31 @@ Each `dev*` command opens a prompt connected to the test Shell and prints the ex
 Settings (`prefs.ts`) run in their own process: after `pnpm build`, `gnome-extensions prefs herdr-pip@hungify`
 inside the test Shell picks up changes without restarting it.
 
-The real-session procedure is in [docs/m0-howto.md](docs/m0-howto.md).
+### Install in your real session
+
+Install a copy from the zip, not a symlink to `build/`:
+
+```sh
+pnpm run pack
+gnome-extensions install --force dist/herdr-pip@hungify.shell-extension.zip
+# log out and back in (Wayland), then:
+gnome-extensions enable herdr-pip@hungify
+gnome-extensions info herdr-pip@hungify | grep State   # ACTIVE
+```
+
+To update, run the same two commands, then log out and back in. `disable`/`enable` is not enough because the Shell
+keeps the old code cached until the next login.
+
+Why not a symlink (`scripts/dev-install.sh`): every `pnpm build`/`check`/`smoke` rewrites `build/`, so the running
+Shell ends up with old code and a new schema. It then fails on the next enable with errors like
+`GSettings key ... not found` (State: ERROR) until you log out. Use the symlink only if you log out after each build.
+
+Uninstall: `gnome-extensions uninstall herdr-pip@hungify`. If it fails:
+
+- **State: ERROR:** run `journalctl --user -b -o cat | grep -A4 herdr-pip@hungify` to see the error.
+- **Extension not loaded at all:** check that `shell-version` in `src/metadata.json` matches `gnome-shell --version`.
+
+The full real-session test procedure, including the fullscreen probe, is in [docs/m0-howto.md](docs/m0-howto.md).
 
 ## Roadmap
 
