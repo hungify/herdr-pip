@@ -5,7 +5,8 @@ source "$(dirname "${BASH_SOURCE[0]}")/lib.sh"
 
 if [ -z "${HERDR_PIP_INNER:-}" ]; then
     home="$(mktemp -d -t herdr-pip-home.XXXXXX)"
-    # shellcheck disable=SC2329
+    # cleanup runs from the trap: SC2317 on shellcheck < 0.10, SC2329 on newer
+    # shellcheck disable=SC2317,SC2329
     cleanup() {
         for env in /proc/[0-9]*/environ; do
             grep -qzx "HOME=$home" "$env" 2>/dev/null || continue
