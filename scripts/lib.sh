@@ -1,0 +1,11 @@
+# shellcheck shell=bash
+# shellcheck disable=SC2034
+UUID="herdr-pip@hungify"
+TESTKIT_UUID="herdr-pip-testkit@hungify"
+SCHEMA="org.gnome.shell.extensions.herdr-pip"
+DBUS_DEST="org.gnome.Shell"
+DBUS_PATH="/io/github/hungify/HerdrPip"
+DBUS_IFACE="io.github.hungify.HerdrPip"
+REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+TESTKIT_PATH="/io/github/hungify/HerdrPipTestkit"
+TESTKIT_IFACE="io.github.hungify.HerdrPipTestkit"

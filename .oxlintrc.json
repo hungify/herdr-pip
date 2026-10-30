@@ -1,0 +1,23 @@
+{
+  "$schema": "./node_modules/oxlint/configuration_schema.json",
+  "plugins": ["eslint", "typescript", "unicorn", "oxc"],
+  "categories": {
+    "correctness": "error",
+    "suspicious": "error"
+  },
+  "env": {
+    "es2024": true
+  },
+  "ignorePatterns": ["build/**", "dist/**", "types/**"],
+  "overrides": [
+    {
+      "files": ["test/**/*.test.ts"],
+      "env": {
+        "node": true
+      }
+    }
+  ],
+  "rules": {
+    "no-underscore-dangle": "off"
+  }
+}

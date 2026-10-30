@@ -1,0 +1,57 @@
+{
+  "id": "cli:agent:list",
+  "result": {
+    "agents": [
+      {
+        "agent": "claude",
+        "agent_status": "done",
+        "display_agent": "Claude: auth",
+        "focused": false,
+        "name": "reviewer",
+        "pane_id": "w1:p1",
+        "revision": 3,
+        "state_change_seq": 12,
+        "state_labels": {
+          "working": "refactoring auth",
+          "idle": "ready",
+          "done": "review ready"
+        },
+        "tab_id": "w1:t1",
+        "terminal_id": "term_0000000000000",
+        "terminal_title": "✳ Example task 1",
+        "terminal_title_stripped": "Example task 1",
+        "title": "Refactor auth middleware",
+        "workspace_id": "w1"
+      },
+      {
+        "agent": "codex",
+        "agent_status": "blocked",
+        "focused": false,
+        "name": "fixer",
+        "pane_id": "w2:p1",
+        "revision": 1,
+        "state_change_seq": 4,
+        "state_labels": {},
+        "tab_id": "w2:t1",
+        "terminal_id": "term_0000000000000",
+        "terminal_title": null,
+        "terminal_title_stripped": null,
+        "title": null,
+        "workspace_id": "w2"
+      },
+      {
+        "agent": null,
+        "agent_status": "unknown",
+        "focused": true,
+        "pane_id": "w3:p1",
+        "revision": 1,
+        "state_change_seq": 1,
+        "tab_id": "w3:t1",
+        "terminal_id": "term_0000000000000",
+        "terminal_title": "zsh",
+        "workspace_id": "w3"
+      }
+    ],
+    "type": "agent_list"
+  }
+}
