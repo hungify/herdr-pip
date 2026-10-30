@@ -1,0 +1,36 @@
+{
+  "name": "herdr-pip",
+  "private": true,
+  "type": "module",
+  "description": "Dev tooling only (TypeScript build, lint, types, tests). Only build/ ships in the extension zip.",
+  "license": "MIT",
+  "packageManager": "pnpm@12.11.2",
+  "scripts": {
+    "build": "scripts/build.sh",
+    "dev": "HERDR_PIP_DEVKIT=1 scripts/run-headless.sh",
+    "dev:fake": "HERDR_PIP_DEVKIT=1 HERDR_PIP_FAKE_HERDR=1 scripts/run-headless.sh",
+    "dev:headless": "scripts/run-headless.sh",
+    "lint": "oxlint && eslint .",
+    "format": "oxfmt",
+    "format:check": "oxfmt --check",
+    "typecheck": "tsc -p . && tsc -p src --noEmit && tsc -p test/headless-testkit --noEmit && tsc -p test",
+    "test": "node --test test/*.test.ts",
+    "check": "scripts/check.sh",
+    "pack": "scripts/pack.sh",
+    "pot": "scripts/pot.sh",
+    "smoke": "scripts/smoke.sh"
+  },
+  "devDependencies": {
+    "@eslint/js": "10.0.1",
+    "@girs/gjs": "4.9.0",
+    "@girs/gnome-shell": "50.0.4",
+    "@types/node": "24.19.2",
+    "eslint": "10.13.0",
+    "eslint-plugin-oxlint": "1.90.0",
+    "jiti": "2.7.0",
+    "oxfmt": "0.75.0",
+    "oxlint": "1.90.0",
+    "typescript": "5.9.3",
+    "typescript-eslint": "8.71.2"
+  }
+}

@@ -1,0 +1,88 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<schemalist>
+  <schema id="org.gnome.shell.extensions.herdr-pip"
+          path="/org/gnome/shell/extensions/herdr-pip/">
+    <key name="menu-hotkey" type="as">
+      <default><![CDATA[['<Super><Shift>h']]]></default>
+      <summary>Open the agent menu</summary>
+    </key>
+    <key name="session" type="s">
+      <default>''</default>
+      <summary>Herdr session name</summary>
+      <description>Passed as herdr --session NAME, and used to find the terminal window running that session. Empty means the default session.</description>
+    </key>
+    <key name="poll-interval" type="u">
+      <range min="1" max="300"/>
+      <default>5</default>
+      <summary>Seconds between agent status polls</summary>
+      <description>Each poll runs herdr agent list once.</description>
+    </key>
+    <key name="show-indicator" type="b">
+      <default>false</default>
+      <summary>Show agent status in the top bar</summary>
+    </key>
+    <key name="overlay-badge" type="s">
+      <choices>
+        <choice value="never"/>
+        <choice value="attention"/>
+        <choice value="always"/>
+      </choices>
+      <default>'always'</default>
+      <summary>When to show the floating badge</summary>
+      <description>The badge floats above all windows, including fullscreen ones, and takes clicks only inside itself. "attention" shows it only while an agent is blocked or done; the hotkey still opens the menu.</description>
+    </key>
+    <key name="badge-position" type="(dd)">
+      <default>(-1.0, -1.0)</default>
+      <summary>Where the badge sits</summary>
+      <description>Fractions (0 to 1) of the free space in the monitor's work area, left and top. Set by dragging the badge; negative means the default top-right corner.</description>
+    </key>
+    <key name="badge-monitor" type="s">
+      <default>''</default>
+      <summary>Monitor the badge stays on</summary>
+      <description>Connector name (e.g. DP-1) of the monitor the badge was dragged to. Empty, or a monitor that is not connected, means the primary monitor.</description>
+    </key>
+    <key name="toast" type="b">
+      <default>true</default>
+      <summary>Show a toast when an agent is done or needs you</summary>
+      <description>A small message next to the badge, also over fullscreen windows (GNOME's own banners are held back there).</description>
+    </key>
+    <key name="toast-done" type="b">
+      <default>true</default>
+      <summary>Toast when an agent is done</summary>
+    </key>
+    <key name="toast-blocked" type="b">
+      <default>true</default>
+      <summary>Toast when an agent needs you (blocked)</summary>
+    </key>
+    <key name="toast-seconds" type="u">
+      <range min="2" max="60"/>
+      <default>6</default>
+      <summary>How long a toast stays</summary>
+    </key>
+    <key name="badge-size" type="u">
+      <range min="24" max="96"/>
+      <default>42</default>
+      <summary>Badge diameter in pixels</summary>
+    </key>
+    <key name="badge-color" type="s">
+      <default>'#3584e4'</default>
+      <summary>Badge background color</summary>
+      <description>"#rrggbb" or "rgb(r,g,b)".</description>
+    </key>
+    <key name="badge-opacity" type="u">
+      <range min="10" max="100"/>
+      <default>95</default>
+      <summary>Badge background opacity, in percent</summary>
+    </key>
+    <key name="badge-dot" type="b">
+      <default>true</default>
+      <summary>Show the attention dot on the badge</summary>
+      <description>Red when an agent is blocked, green when one is done.</description>
+    </key>
+    <key name="badge-ring" type="b">
+      <default>true</default>
+      <summary>Progress ring around the badge</summary>
+      <description>A 2 px ring around the badge showing the latest status change, one at a time: a spinning blue arc when an agent starts working, a green ring filling up when one is done, a pulsing red ring when one is blocked. When nothing is queued it spins while any agent is working.</description>
+    </key>
+  </schema>
+</schemalist>
