@@ -4,6 +4,9 @@
   "type": "module",
   "description": "Dev tooling only (TypeScript build, lint, types, tests). Only build/ ships in the extension zip.",
   "license": "MIT",
+  "engines": {
+    "node": ">=24"
+  },
   "packageManager": "pnpm@12.11.2",
   "scripts": {
     "build": "scripts/build.sh",
