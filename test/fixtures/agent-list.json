@@ -1,0 +1,54 @@
+{
+  "id": "cli:agent:list",
+  "result": {
+    "agents": [
+      {
+        "agent": "claude",
+        "agent_status": "done",
+        "completion_seq": 30,
+        "cwd": "/home/user/projects/example",
+        "focused": false,
+        "foreground_cwd": "/home/user/projects/example",
+        "pane_id": "w7:pB",
+        "revision": 2,
+        "state_change_seq": 30,
+        "tab_id": "w7:tB",
+        "terminal_id": "term_0000000000000",
+        "terminal_title": "✳ Example task 1",
+        "terminal_title_stripped": "Example task 1",
+        "workspace_id": "w7"
+      },
+      {
+        "agent": "codex",
+        "agent_status": "working",
+        "cwd": "/home/user/projects/example",
+        "focused": true,
+        "foreground_cwd": "/home/user/projects/example",
+        "pane_id": "wA:p1",
+        "revision": 7,
+        "state_change_seq": 22,
+        "tab_id": "wA:t1",
+        "terminal_id": "term_0000000000000",
+        "terminal_title": "⠹ Example task 2",
+        "terminal_title_stripped": "Example task 2",
+        "workspace_id": "wA"
+      },
+      {
+        "agent": "claude",
+        "agent_status": "working",
+        "cwd": "/home/user/projects/example",
+        "focused": false,
+        "foreground_cwd": "/home/user/projects/example",
+        "pane_id": "wB:p1",
+        "revision": 2,
+        "state_change_seq": 33,
+        "tab_id": "wB:t1",
+        "terminal_id": "term_0000000000000",
+        "terminal_title": "◑ Example task 3",
+        "terminal_title_stripped": "Example task 3",
+        "workspace_id": "wB"
+      }
+    ],
+    "type": "agent_list"
+  }
+}

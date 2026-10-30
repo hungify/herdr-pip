@@ -1,0 +1,7 @@
+{
+  "error": {
+    "code": "server_not_running",
+    "message": "no herdr server is running at /home/user/.config/herdr/sessions/nonexistent-xyz/herdr.sock; run `herdr session attach nonexistent-xyz` to start or attach it"
+  },
+  "id": "cli:agent:list"
+}
