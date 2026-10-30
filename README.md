@@ -4,9 +4,6 @@ A floating badge for [Herdr](https://herdr.dev) on **GNOME Shell 49/50 (Wayland)
 window, fullscreen ones included. Click it, pick an agent, and you land in your own Herdr terminal window on that
 agent.
 
-> **Not affiliated with Herdr.** Herdr is only run as an external CLI (`agent list`, `agent focus`). See
-> [NOTICE.md](NOTICE.md). Inspired by [finna/herdr-hud](https://github.com/finna/herdr-hud) (idea only, no code reused).
-
 Status: works on GNOME Shell 50.6 (Fedora 44) with herdr 0.9.5. Not tried on 49 yet.
 
 ## Features
