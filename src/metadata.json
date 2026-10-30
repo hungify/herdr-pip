@@ -1,7 +1,7 @@
 {
   "uuid": "herdr-pip@hungify",
   "name": "Herdr PiP",
-  "description": "A floating badge with Herdr agent status (blocked, done, working) that stays visible over fullscreen windows. Click it to pick an agent: Herdr focuses that agent and the terminal window running herdr is raised. Runs the herdr CLI (agent list, agent focus); does not launch anything else. Exposes OpenMenu and Focus on the session D-Bus (io.github.hungify.HerdrPip) so the menu can be opened when a fullscreen app blocks shortcuts. Not affiliated with Herdr.",
+  "description": "A floating badge with Herdr agent status (blocked, done, working) that stays visible over fullscreen windows. Click it to pick an agent: Herdr focuses that agent and the terminal window running herdr is raised. Runs the herdr CLI (agent list, agent focus); does not launch anything else. Exposes OpenMenu and Focus on the session D-Bus (io.github.hungify.HerdrPip) so the menu can be opened when a fullscreen app blocks shortcuts.",
   "shell-version": ["49", "50"],
   "version-name": "0.3.0",
   "settings-schema": "org.gnome.shell.extensions.herdr-pip",
