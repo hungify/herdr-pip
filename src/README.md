@@ -47,4 +47,4 @@ External trigger (for when a fullscreen app keeps the shortcut from reaching the
 scripts/call.sh                  # OpenMenu (default) | Focus <pane_id>
 ```
 
-See "Install in your real session" in the top-level README.
+See "Install" in the top-level README.
