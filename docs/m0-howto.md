@@ -17,10 +17,12 @@ On a development release, list at most one.
 ## 1. Install
 
 ```sh
-scripts/dev-install.sh
+scripts/dev-install.sh                  # the extension only
+scripts/dev-install.sh --with-testkit   # also the test-only herdr-pip-testkit@hungify (step 4 needs it)
 ```
 
-This links both the extension and the test-only `herdr-pip-testkit@hungify` (left disabled; step 4 uses it).
+The testkit is left disabled. While enabled it exposes Screenshot/Click/Drag on the session bus, so run
+`scripts/dev-install.sh` again without the flag to remove it when done.
 A newly linked extension is only seen by a Shell started afterwards.
 
 ## 2. Try it in a test Shell first

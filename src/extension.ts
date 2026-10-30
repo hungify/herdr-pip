@@ -6,7 +6,7 @@ import Shell from 'gi://Shell';
 import {Extension, gettext as _} from 'resource:///org/gnome/shell/extensions/extension.js';
 import * as Main from 'resource:///org/gnome/shell/ui/main.js';
 
-import {badgeWanted, toastAgents} from './herdr.ts';
+import {badgeWanted, isPaneId, toastAgents} from './herdr.ts';
 import {ringEvents} from './ring.ts';
 import type {Summary} from './herdr.ts';
 import {APPEARANCE_KEYS} from './appearance.ts';
@@ -54,9 +54,15 @@ class HerdrPip {
             appearance: this._appearance(),
         });
 
-        Main.wm.addKeybinding(KEY_HOTKEY, this._settings, Meta.KeyBindingFlags.NONE, Shell.ActionMode.NORMAL, () => {
-            this._badge.toggleMenu(true);
-        });
+        Main.wm.addKeybinding(
+            KEY_HOTKEY,
+            this._settings,
+            Meta.KeyBindingFlags.NONE,
+            Shell.ActionMode.NORMAL | Shell.ActionMode.OVERVIEW,
+            () => {
+                this._badge.toggleMenu(true);
+            },
+        );
 
         this._dbus = Gio.DBusExportedObject.wrapJSObject(DBUS_XML, this);
         this._dbus.export(Gio.DBus.session, DBUS_PATH);
@@ -74,7 +80,9 @@ class HerdrPip {
                 this._herdr.start(this._pollInterval());
             }),
             this._settings.connect('changed::session', () => {
-                this._herdr.poll();
+                this._summary = null;
+                this._badge.clearRing();
+                this._herdr.restart();
             }),
             this._settings.connect('changed::show-indicator', () => {
                 this._syncIndicator();
@@ -114,6 +122,9 @@ class HerdrPip {
     }
 
     Focus(paneId: string): void {
+        if (!isPaneId(paneId)) {
+            throw new Error(`not a pane id: ${paneId}`);
+        }
         this._focusAgent(paneId);
     }
 

@@ -208,8 +208,14 @@ export default class HerdrPipPreferences extends ExtensionPreferences {
         });
         page.add(status);
 
-        const session = new Adw.EntryRow({title: _('Session (empty for the default)')});
-        settings.bind('session', session, 'text', Gio.SettingsBindFlags.DEFAULT);
+        const session = new Adw.EntryRow({
+            title: _('Session, empty for the default (Enter to apply)'),
+            show_apply_button: true,
+            text: settings.get_string('session'),
+        });
+        session.connect('apply', () => {
+            settings.set_string('session', session.text.trim());
+        });
         status.add(session);
         status.add(spinRow(settings, 'poll-interval', _('Poll interval'), _('Seconds'), 1, 300));
         status.add(switchRow(settings, 'show-indicator', _('Also show in the top bar')));

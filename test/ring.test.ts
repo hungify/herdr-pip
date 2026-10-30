@@ -62,3 +62,10 @@ test('ringArcs: spin rotates, fill grows to a full circle, pulse breathes', () =
     const [p1] = ringArcs({kind: 'pulse', status: 'blocked', since: 0}, 500);
     assert.ok(p0 && p1 && p0.alpha === 1 && p1.alpha < 0.3);
 });
+
+test('RingQueue.clear drops queued events', () => {
+    const queue = new RingQueue();
+    queue.push([{paneId: 'p1', status: 'done'}]);
+    queue.clear();
+    assert.equal(queue.current(0, false), null);
+});

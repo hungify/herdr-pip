@@ -13,7 +13,7 @@ import {WAITING, attentionText, urgentStatus} from './herdr.ts';
 import type {Agent, Status, Summary} from './herdr.ts';
 import {RING_GAP, RING_WIDTH, STATUS_RGB, badgeStyle, dotStyle} from './appearance.ts';
 import type {Appearance} from './appearance.ts';
-import {fillAgents} from './menu.ts';
+import {AgentSection} from './menu.ts';
 import type {OnFocus} from './menu.ts';
 import {RingQueue, ringArcs} from './ring.ts';
 import type {RingEvent} from './ring.ts';
@@ -26,6 +26,8 @@ interface Connectable {
 }
 
 export type OnMoved = (position: Position, monitor: string) => void;
+
+const RING_FRAME_MS = 33;
 
 function monitorManager(): Meta.MonitorManager {
     return global.backend.get_monitor_manager();
@@ -60,13 +62,13 @@ export class OverlayBadge {
     private readonly _actor: St.Widget;
     private readonly _button: St.Button;
     private readonly _ring: St.DrawingArea;
-    private readonly _ringTimeline: Clutter.Timeline;
+    private _ringTickId = 0;
     private readonly _dot: St.Widget;
     private readonly _pan: Clutter.PanGesture;
     private readonly _toast: St.Button;
     private readonly _toastLabel: St.Label;
     private readonly _menu: PopupMenu.PopupMenu;
-    private readonly _section: PopupMenu.PopupMenuSection;
+    private readonly _agents: AgentSection;
     private readonly _manager: PopupMenu.PopupMenuManager;
 
     constructor({
@@ -99,7 +101,6 @@ export class OverlayBadge {
         });
         this._dot = new St.Widget({style_class: 'herdr-pip-dot', reactive: false, visible: false});
         this._ring = new St.DrawingArea({reactive: false});
-        this._ringTimeline = new Clutter.Timeline({actor: this._ring, duration: 1000, repeat_count: -1});
         this._actor.add_child(this._button);
         this._actor.add_child(this._ring);
         this._actor.add_child(this._dot);
@@ -116,8 +117,8 @@ export class OverlayBadge {
         this._menu = new PopupMenu.PopupMenu(this._button, 0.5, St.Side.TOP);
         this._menu.actor.hide();
         Main.layoutManager.uiGroup.add_child(this._menu.actor);
-        this._section = new PopupMenu.PopupMenuSection();
-        this._menu.addMenuItem(this._section);
+        this._agents = new AgentSection(onFocus);
+        this._menu.addMenuItem(this._agents.section);
         this._manager = new PopupMenu.PopupMenuManager(this._button);
         this._manager.addMenu(this._menu);
 
@@ -148,6 +149,7 @@ export class OverlayBadge {
             this._toastClicked();
         });
         this._connect(this._menu, 'open-state-changed', () => {
+            this._agents.setOpen(this._menu.isOpen);
             this._sync();
         });
         this._connect(Main.layoutManager, 'monitors-changed', () => {
@@ -158,9 +160,6 @@ export class OverlayBadge {
         });
         this._connect(this._ring, 'repaint', () => {
             this._repaintRing();
-        });
-        this._connect(this._ringTimeline, 'new-frame', () => {
-            this._ring.queue_repaint();
         });
         this._connect(this._dot, 'notify::width', () => {
             this._place();
@@ -181,7 +180,7 @@ export class OverlayBadge {
             obj.disconnect(id);
         }
         this._signals = [];
-        this._ringTimeline.stop();
+        this._stopRingTick();
         if (this._toastId) {
             GLib.source_remove(this._toastId);
         }
@@ -198,6 +197,9 @@ export class OverlayBadge {
         this._appearance = appearance;
         this._button.style = badgeStyle(appearance);
         this._dot.style = dotStyle(appearance.size);
+        if (!appearance.ring) {
+            this._ringQueue.clear();
+        }
         this._syncDot();
         this._syncRing();
         this._place();
@@ -209,12 +211,19 @@ export class OverlayBadge {
         this._urgent = urgentStatus(summary);
         this._working = summary.parts.some(p => p.status === 'working');
         this._syncDot();
-        fillAgents(this._section, summary, this._onFocus);
+        this._agents.update(summary);
         this._sync();
     }
 
     queueRing(events: readonly RingEvent[]): void {
-        this._ringQueue.push(events);
+        if (this._ringShown()) {
+            this._ringQueue.push(events);
+            this._syncRing();
+        }
+    }
+
+    clearRing(): void {
+        this._ringQueue.clear();
         this._syncRing();
     }
 
@@ -247,6 +256,7 @@ export class OverlayBadge {
         const more = agents.length > 1 ? ` ${_('(+%d more)').replace('%d', String(agents.length - 1))}` : '';
         this._toastLabel.text = attentionText(first, _) + more;
         this._toast.style_class = `herdr-pip-toast herdr-pip-toast-${first.status}`;
+        this._toast.remove_all_transitions();
         this._toast.opacity = 255;
         this._toast.show();
         this._placeToast();
@@ -286,19 +296,25 @@ export class OverlayBadge {
         this._toastAgent = null;
     }
 
+    private _ringShown(): boolean {
+        return this._appearance.ring && this._actor.visible;
+    }
+
     private _ringState() {
-        if (!this._appearance.ring || !this._actor.visible) {
+        if (!this._ringShown()) {
             return null;
         }
         return this._ringQueue.current(GLib.get_monotonic_time() / 1000, this._working);
     }
 
     private _syncRing(): void {
-        const animate = this._ringState() !== null;
-        if (animate && !this._ringTimeline.is_playing()) {
-            this._ringTimeline.start();
-        } else if (!animate && this._ringTimeline.is_playing()) {
-            this._ringTimeline.stop();
+        if (this._ringState() !== null) {
+            this._ringTickId ||= GLib.timeout_add(GLib.PRIORITY_DEFAULT, RING_FRAME_MS, () => {
+                this._ring.queue_repaint();
+                return GLib.SOURCE_CONTINUE;
+            });
+        } else {
+            this._stopRingTick();
         }
         this._ring.visible = this._appearance.ring;
         this._ring.queue_repaint();
@@ -329,10 +345,17 @@ export class OverlayBadge {
                 cr.arc(cx, cy, radius, arc.start, arc.end);
                 cr.stroke();
             }
-        } else if (this._ringTimeline.is_playing()) {
-            this._ringTimeline.stop();
+        } else {
+            this._stopRingTick();
         }
         cr.$dispose();
+    }
+
+    private _stopRingTick(): void {
+        if (this._ringTickId) {
+            GLib.source_remove(this._ringTickId);
+            this._ringTickId = 0;
+        }
     }
 
     private _syncDot(): void {
@@ -343,6 +366,9 @@ export class OverlayBadge {
 
     private _sync(): void {
         this._actor.visible = this._wanted || this._menu.isOpen;
+        if (!this._actor.visible) {
+            this._ringQueue.clear();
+        }
         this._syncRing();
         this._place();
     }
@@ -384,9 +410,9 @@ export class OverlayBadge {
         if (!area) {
             return;
         }
-        this._toast.set_position(
-            ...toastXY(this._actor.get_position(), this._button.width, this._toast.width, this._toast.height, area),
-        );
+        const size = this._button.width;
+        const badge = this._actor.visible ? this._actor.get_position() : positionToXY(this._position, size, area);
+        this._toast.set_position(...toastXY(badge, size, this._toast.width, this._toast.height, area));
     }
 
     private _dragBegin(): void {

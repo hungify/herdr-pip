@@ -9,7 +9,7 @@ import type {Agent, Summary} from './herdr.ts';
 
 export type OnFocus = (agent: Agent) => void;
 
-export function fillAgents(section: PopupMenu.PopupMenuSection, summary: Summary, onFocus: OnFocus): void {
+function fillAgents(section: PopupMenu.PopupMenuSection, summary: Summary, onFocus: OnFocus): void {
     section.removeAll();
     section.addMenuItem(new PopupMenu.PopupMenuItem(summaryText(summary, _), {reactive: false}));
     for (const agent of summary.agents) {
@@ -27,5 +27,33 @@ export function fillAgents(section: PopupMenu.PopupMenuSection, summary: Summary
             onFocus(agent);
         });
         section.addMenuItem(item);
+    }
+}
+
+export class AgentSection {
+    readonly section = new PopupMenu.PopupMenuSection();
+    private readonly _onFocus: OnFocus;
+    private _open = false;
+    private _pending: Summary | null = null;
+
+    constructor(onFocus: OnFocus) {
+        this._onFocus = onFocus;
+    }
+
+    update(summary: Summary): void {
+        if (this._open) {
+            this._pending = summary;
+            return;
+        }
+        fillAgents(this.section, summary, this._onFocus);
+    }
+
+    setOpen(open: boolean): void {
+        this._open = open;
+        if (!open && this._pending) {
+            const summary = this._pending;
+            this._pending = null;
+            this.update(summary);
+        }
     }
 }

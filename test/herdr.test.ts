@@ -17,6 +17,8 @@ import {
     badgeWanted,
     toastAgents,
     pickHerdrWindow,
+    isPaneId,
+    windowOwner,
 } from '../src/herdr.ts';
 import type {Agent, Status} from '../src/herdr.ts';
 
@@ -123,8 +125,7 @@ test('herdrCommand puts the session before the subcommand', () => {
     assert.deepEqual(herdrCommand('/bin/herdr', '', 'agent', 'list'), ['/bin/herdr', 'agent', 'list']);
     assert.deepEqual(herdrCommand('/bin/herdr', 'work', 'agent', 'focus', 'w7:p1'), [
         '/bin/herdr',
-        '--session',
-        'work',
+        '--session=work',
         'agent',
         'focus',
         'w7:p1',
@@ -155,6 +156,39 @@ test('isHerdrClient: named session', () => {
     assert.ok(isHerdrClient(['herdr', 'session', 'attach', 'work'], 'work'));
     assert.ok(!isHerdrClient(['herdr'], 'work'));
     assert.ok(isHerdrClient(['herdr'], 'default'));
+    assert.ok(isHerdrClient(['herdr', '--session=work'], 'work'));
+    assert.ok(!isHerdrClient(['herdr', '--session=work', 'agent', 'list'], 'work'));
+});
+
+test('isHerdrClient: herdr must be the program, not an argument', () => {
+    assert.ok(isHerdrClient(['/usr/bin/env', 'herdr']));
+    assert.ok(!isHerdrClient(['vim', 'herdr']));
+    assert.ok(!isHerdrClient(['less', '/home/u/.local/bin/herdr']));
+    assert.ok(!isHerdrClient(['bash', '-c', 'herdr']));
+});
+
+test('isPaneId rejects empty values and anything that reads as a flag', () => {
+    assert.ok(isPaneId('wA:p1'));
+    assert.ok(!isPaneId(''));
+    assert.ok(!isPaneId('--help'));
+    assert.ok(!isPaneId('w1 p1'));
+});
+
+const ppidLoop = (pid: number) => Promise.resolve(pid === 7 ? 8 : 7);
+
+test('windowOwner stops at the nearest ancestor that owns a window', async () => {
+    // herdr 30 > shell 20 > terminal 10 (window) > editor 5 (window) > systemd 1
+    const ppid = new Map([
+        [30, 20],
+        [20, 10],
+        [10, 5],
+        [5, 1],
+    ]);
+    const parent = (pid: number) => Promise.resolve(ppid.get(pid) ?? 0);
+    const windows = new Set([10, 5]);
+    assert.equal(await windowOwner(30, p => windows.has(p), parent), 10);
+    assert.equal(await windowOwner(30, () => false, parent), 0);
+    assert.equal(await windowOwner(7, () => false, ppidLoop), 0, 'a ppid loop ends');
 });
 
 test('parsePpid', () => {

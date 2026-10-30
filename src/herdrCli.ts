@@ -4,7 +4,7 @@ import GLib from 'gi://GLib';
 import {herdrCommand, summarize} from './herdr.ts';
 import type {Summary} from './herdr.ts';
 
-const POLL_TIMEOUT_US = 10 * GLib.USEC_PER_SEC;
+const POLL_TIMEOUT_S = 10;
 
 function errorMessage(e: unknown): string {
     return e instanceof Error ? e.message : String(e);
@@ -22,7 +22,7 @@ export class HerdrCli {
     private readonly _procs = new Set<Gio.Subprocess>();
     private _sourceId = 0;
     private _poll: Gio.Subprocess | null = null;
-    private _pollStartedAt = 0;
+    private _killId = 0;
 
     constructor(session: () => string, onSummary: (summary: Summary) => void) {
         this._session = session;
@@ -32,8 +32,7 @@ export class HerdrCli {
     destroy(): void {
         this._stopTimer();
         this._cancellable.cancel();
-        this._poll?.force_exit();
-        this._poll = null;
+        this._dropPoll();
         for (const proc of this._procs) {
             proc.force_exit();
         }
@@ -49,11 +48,13 @@ export class HerdrCli {
         this.poll();
     }
 
+    restart(): void {
+        this._dropPoll();
+        this.poll();
+    }
+
     poll(): void {
         if (this._poll) {
-            if (GLib.get_monotonic_time() - this._pollStartedAt > POLL_TIMEOUT_US) {
-                this._poll.force_exit();
-            }
             return;
         }
         const argv = this._argv('agent', 'list');
@@ -70,7 +71,11 @@ export class HerdrCli {
             return;
         }
         this._poll = proc;
-        this._pollStartedAt = GLib.get_monotonic_time();
+        this._killId = GLib.timeout_add_seconds(GLib.PRIORITY_DEFAULT, POLL_TIMEOUT_S, () => {
+            this._killId = 0;
+            proc.force_exit();
+            return GLib.SOURCE_REMOVE;
+        });
 
         proc.communicate_utf8_async(null, this._cancellable, (_source, res) => {
             let stdout = '',
@@ -87,9 +92,11 @@ export class HerdrCli {
                 }
                 stderr = errorMessage(e);
             }
-            if (this._poll === proc) {
-                this._poll = null;
+            if (this._cancellable.is_cancelled() || this._poll !== proc) {
+                return;
             }
+            this._clearKill();
+            this._poll = null;
             this._onSummary(summarize({exitOk, stdout, stderr}));
         });
     }
@@ -124,6 +131,19 @@ export class HerdrCli {
     private _argv(...args: string[]): string[] | null {
         const herdr = findHerdr();
         return herdr !== null ? herdrCommand(herdr, this._session(), ...args) : null;
+    }
+
+    private _dropPoll(): void {
+        this._clearKill();
+        this._poll?.force_exit();
+        this._poll = null;
+    }
+
+    private _clearKill(): void {
+        if (this._killId) {
+            GLib.source_remove(this._killId);
+            this._killId = 0;
+        }
     }
 
     private _stopTimer(): void {

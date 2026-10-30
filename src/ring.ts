@@ -59,6 +59,10 @@ export class RingQueue {
         }
     }
 
+    clear(): void {
+        this._items = [];
+    }
+
     current(now: number, working: boolean): RingState | null {
         for (
             let head = this._items[0];

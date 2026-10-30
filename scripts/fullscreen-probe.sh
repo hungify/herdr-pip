@@ -4,6 +4,8 @@ set -euo pipefail
 source "$(dirname "${BASH_SOURCE[0]}")/lib.sh"
 
 interval="${1:-1}"
+extensions="${XDG_DATA_HOME:-$HOME/.local/share}/gnome-shell/extensions"
+[ -e "$extensions/$TESTKIT_UUID" ] || { echo "testkit not installed: scripts/dev-install.sh --with-testkit" >&2; exit 1; }
 gnome-extensions enable "$TESTKIT_UUID"
 trap 'gnome-extensions disable "$TESTKIT_UUID"' EXIT
 while true; do

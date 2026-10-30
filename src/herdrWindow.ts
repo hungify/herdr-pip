@@ -2,7 +2,7 @@ import Gio from 'gi://Gio';
 import GLib from 'gi://GLib';
 import Meta from 'gi://Meta';
 
-import {isHerdrClient, parsePpid, pickHerdrWindow} from './herdr.ts';
+import {isHerdrClient, parsePpid, pickHerdrWindow, windowOwner} from './herdr.ts';
 
 function promise<T>(
     start: (done: (_source: unknown, res: Gio.AsyncResult) => void) => void,
@@ -99,16 +99,22 @@ async function herdrClientPids(session: string, cancellable: Gio.Cancellable): P
 }
 
 export async function findHerdrWindow(session: string, cancellable: Gio.Cancellable): Promise<Meta.Window | null> {
-    const owners = new Set<number>();
-    for (const pid of await herdrClientPids(session, cancellable)) {
-        for (let p = pid; p > 1 && !owners.has(p); p = parsePpid(await readText(`/proc/${p}/stat`, cancellable))) {
-            owners.add(p);
-        }
-    }
-    if (!owners.size || cancellable.is_cancelled()) {
+    const clients = await herdrClientPids(session, cancellable);
+    if (!clients.length || cancellable.is_cancelled()) {
         return null;
     }
 
-    const windows = global.display.get_tab_list(Meta.TabList.NORMAL_ALL, null).filter(w => owners.has(w.get_pid()));
-    return pickHerdrWindow(windows, w => w.get_title() as string | null);
+    const windows = global.display.get_tab_list(Meta.TabList.NORMAL_ALL, null);
+    const windowPids = new Set<number>(windows.map(w => w.get_pid()));
+    const parent = async (pid: number) => parsePpid(await readText(`/proc/${pid}/stat`, cancellable));
+    const owners = new Set(
+        (await Promise.all(clients.map(pid => windowOwner(pid, p => windowPids.has(p), parent)))).filter(p => p > 0),
+    );
+    if (cancellable.is_cancelled()) {
+        return null;
+    }
+    return pickHerdrWindow(
+        windows.filter(w => owners.has(w.get_pid())),
+        w => w.get_title() as string | null,
+    );
 }

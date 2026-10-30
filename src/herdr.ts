@@ -68,7 +68,11 @@ function firstText(values: readonly unknown[], fallback: string): string {
 }
 
 export function herdrCommand(herdrPath: string, session: string, ...args: string[]): string[] {
-    return session ? [herdrPath, '--session', session, ...args] : [herdrPath, ...args];
+    return session ? [herdrPath, `--session=${session}`, ...args] : [herdrPath, ...args];
+}
+
+export function isPaneId(paneId: string): boolean {
+    return /^[^-\s]\S*$/.test(paneId);
 }
 
 const NOT_CLIENT = new Set([
@@ -98,13 +102,19 @@ const NOT_CLIENT = new Set([
     '--skill',
 ]);
 
+const INTERPRETER = /^(?:env|sh|bash|dash|zsh|ksh|fish)$/;
+
 function sessionName(session: string): string {
     return session === 'default' ? '' : session;
 }
 
+function basename(path: string | undefined): string {
+    return path?.split('/').pop() ?? '';
+}
+
 export function isHerdrClient(argv: readonly string[], session = ''): boolean {
-    const start = argv.findIndex(a => a.split('/').pop() === 'herdr');
-    if (start < 0) {
+    const start = basename(argv[0]) === 'herdr' ? 0 : INTERPRETER.test(basename(argv[0])) ? 1 : -1;
+    if (start < 0 || basename(argv[start]) !== 'herdr') {
         return false;
     }
     const args = argv.slice(start + 1);
@@ -117,6 +127,8 @@ export function isHerdrClient(argv: readonly string[], session = ''): boolean {
         const arg = args[i];
         if (arg === '--session') {
             attached = args[++i] ?? '';
+        } else if (arg?.startsWith('--session=') === true) {
+            attached = arg.slice('--session='.length);
         } else if (arg === 'session') {
             if (args[i + 1] !== 'attach') {
                 return false;
@@ -134,6 +146,21 @@ export function parsePpid(stat: string): number {
     const fields = stat.slice(stat.lastIndexOf(')') + 2).split(' ');
     const ppid = Number(fields[1]);
     return Number.isInteger(ppid) && ppid > 0 ? ppid : 0;
+}
+
+export async function windowOwner(
+    pid: number,
+    hasWindow: (pid: number) => boolean,
+    parent: (pid: number) => Promise<number>,
+): Promise<number> {
+    const seen = new Set<number>();
+    for (let p = pid; p > 1 && !seen.has(p); p = await parent(p)) {
+        if (hasWindow(p)) {
+            return p;
+        }
+        seen.add(p);
+    }
+    return 0;
 }
 
 export function parseError(text: string): HerdrError | null {
