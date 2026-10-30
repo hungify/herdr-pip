@@ -1,0 +1,10 @@
+{
+  "uuid": "herdr-pip@hungify",
+  "name": "Herdr PiP",
+  "description": "Herdr agent status in a floating badge that stays visible over fullscreen windows.\n\n* A ring and a dot show when an agent is working, done or blocked\n* Click the badge (or Super+Shift+H) to pick an agent: Herdr focuses it and the terminal window running herdr is raised\n* Toasts next to the badge when an agent is done or needs you\n\nRequires the herdr CLI. Polls \"herdr agent list\" and runs \"herdr agent focus\"; nothing else is launched. OpenMenu and Focus are exposed on the session D-Bus (io.github.hungify.HerdrPip) for when a fullscreen app blocks shortcuts.",
+  "shell-version": ["50"],
+  "version-name": "0.3.0",
+  "settings-schema": "org.gnome.shell.extensions.herdr-pip",
+  "gettext-domain": "herdr-pip",
+  "url": "https://github.com/hungify/herdr-pip"
+}
