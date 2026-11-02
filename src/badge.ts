@@ -56,6 +56,9 @@ export class OverlayBadge {
     private _inactive = false;
     private _dragging: {x: number; y: number; monitor: number} | null = null;
     private _pressGrab: Clutter.Grab | null = null;
+    // A press on the badge while the menu is open. The menu's modal grab keeps that press from the pan gesture,
+    // so this drag is tracked by hand from the pointer motion that follows.
+    private _menuPress: {x: number; y: number} | null = null;
     private _toastId = 0;
     private _toastAgent: Agent | null = null;
     private _signals: [Connectable, number][] = [];
@@ -127,7 +130,8 @@ export class OverlayBadge {
             this._dragBegin();
         });
         this._connect(this._pan, 'pan-update', () => {
-            this._dragUpdate();
+            const delta = this._pan.get_accumulated_delta_abs();
+            this._dragUpdate(delta.get_x(), delta.get_y());
         });
         this._connect(this._pan, 'end', () => {
             this._dragEnd();
@@ -142,10 +146,16 @@ export class OverlayBadge {
             this._pressGrab ??= global.stage.grab(this._button);
             return Clutter.EVENT_PROPAGATE;
         });
-        this._connect(this._button, 'button-release-event', () => {
-            this._releasePressGrab();
+        // The release is caught on the way down: St.Button's click gesture takes it, so a plain click never
+        // reaches button-release-event, and a press grab left behind would send every later click to the badge.
+        this._connectEvent(this._button, 'captured-event', event => {
+            if (event.type() === Clutter.EventType.BUTTON_RELEASE) {
+                this._pressReleased();
+            }
             return Clutter.EVENT_PROPAGATE;
         });
+        this._connectEvent(this._button, 'motion-event', event => this._menuPressMotion(event));
+        this._connectEvent(this._menu.actor, 'captured-event', event => this._menuCapturedEvent(event));
         this._connect(this._toast, 'clicked', () => {
             this._toastClicked();
         });
@@ -176,6 +186,17 @@ export class OverlayBadge {
         this._signals.push([obj, obj.connect(signal, callback)]);
     }
 
+    private _connectEvent(
+        actor: Clutter.Actor,
+        signal: 'motion-event' | 'captured-event',
+        callback: (event: Clutter.Event) => boolean,
+    ): void {
+        this._signals.push([
+            actor,
+            actor.connect(signal, (_actor: Clutter.Actor, event: Clutter.Event) => callback(event)),
+        ]);
+    }
+
     destroy(): void {
         for (const [obj, id] of this._signals) {
             obj.disconnect(id);
@@ -187,6 +208,7 @@ export class OverlayBadge {
         }
         this._toastId = 0;
         this._dragging = null;
+        this._menuPress = null;
         this._releasePressGrab();
         this._manager.removeMenu(this._menu);
         this._menu.destroy();
@@ -437,14 +459,13 @@ export class OverlayBadge {
         this._dragging = {x, y, monitor: this._monitorIndex()};
     }
 
-    private _dragUpdate(): void {
+    private _dragUpdate(dx: number, dy: number): void {
         if (!this._dragging) {
             return;
         }
-        const delta = this._pan.get_accumulated_delta_abs();
         const size = this._button.width;
-        const x = this._dragging.x + delta.get_x();
-        const y = this._dragging.y + delta.get_y();
+        const x = this._dragging.x + dx;
+        const y = this._dragging.y + dy;
         const under = monitorAt(x + size / 2, y + size / 2, Main.layoutManager.monitors);
         if (under >= 0) {
             this._dragging.monitor = under;
@@ -455,6 +476,45 @@ export class OverlayBadge {
         }
         this._actor.set_position(...clampInto(x, y, size, size, area));
         this._placeToast();
+    }
+
+    // PopupMenuManager's handler runs first (it connected first): a press outside the menu closes it and drops
+    // the modal grab. If that press was on the badge, grab the badge so the motion and release that follow reach it.
+    private _menuCapturedEvent(event: Clutter.Event): boolean {
+        if (event.type() !== Clutter.EventType.BUTTON_PRESS || event.get_button() !== Clutter.BUTTON_PRIMARY) {
+            return Clutter.EVENT_PROPAGATE;
+        }
+        const target = global.stage.get_event_actor(event);
+        if (!target || !this._button.contains(target)) {
+            return Clutter.EVENT_PROPAGATE;
+        }
+        const [x, y] = event.get_coords();
+        this._menuPress = {x, y};
+        this._pressGrab ??= global.stage.grab(this._button);
+        return Clutter.EVENT_STOP;
+    }
+
+    private _menuPressMotion(event: Clutter.Event): boolean {
+        const press = this._menuPress;
+        if (!press) {
+            return Clutter.EVENT_PROPAGATE;
+        }
+        const [x, y] = event.get_coords();
+        const dx = x - press.x;
+        const dy = y - press.y;
+        if (!this._dragging && Math.hypot(dx, dy) >= St.Settings.get().drag_threshold) {
+            this._dragBegin();
+        }
+        this._dragUpdate(dx, dy);
+        return Clutter.EVENT_STOP;
+    }
+
+    private _pressReleased(): void {
+        this._releasePressGrab();
+        if (this._menuPress) {
+            this._menuPress = null;
+            this._dragEnd();
+        }
     }
 
     private _releasePressGrab(): void {
