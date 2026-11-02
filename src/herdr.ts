@@ -307,6 +307,16 @@ export function pickHerdrWindow<T>(windows: readonly T[], title: (window: T) => 
     return windows.find(w => /herdr/i.test(title(w) ?? '')) ?? windows[0] ?? null;
 }
 
+export function alertSound(fresh: readonly Agent[], mode: string): 'blocked' | 'done' | null {
+    if (mode === 'never') {
+        return null;
+    }
+    if (fresh.some(a => a.status === 'blocked')) {
+        return 'blocked';
+    }
+    return mode === 'attention' && fresh.some(a => a.status === 'done') ? 'done' : null;
+}
+
 export function stampSince(prev: readonly Agent[] | null, agents: readonly Agent[], now: number): Agent[] {
     if (!prev) {
         return agents.map(a => ({...a, since: null}));

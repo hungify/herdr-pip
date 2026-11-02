@@ -19,6 +19,7 @@ import {
     parseSocketPath,
     subscribeRequest,
     parseStreamLine,
+    alertSound,
     pickHerdrWindow,
     isPaneId,
     windowOwner,
@@ -289,6 +290,17 @@ test('pickHerdrWindow prefers a window titled herdr, else the first, untitled on
     assert.equal(pickHerdrWindow([zsh, herdr], windowTitle), herdr);
     assert.equal(pickHerdrWindow([untitled, zsh], windowTitle), untitled);
     assert.equal(pickHerdrWindow([], windowTitle), null);
+});
+
+test('alertSound: blocked wins, done only in attention mode', () => {
+    const blocked = agent('p1', 'blocked');
+    const done = agent('p2', 'done');
+    assert.equal(alertSound([done, blocked], 'blocked'), 'blocked');
+    assert.equal(alertSound([done], 'blocked'), null);
+    assert.equal(alertSound([done], 'attention'), 'done');
+    assert.equal(alertSound([done, blocked], 'attention'), 'blocked');
+    assert.equal(alertSound([blocked], 'never'), null);
+    assert.equal(alertSound([], 'attention'), null);
 });
 
 const list = (fields: string): string => `{"result":{"agents":[{${fields}}]}}`;

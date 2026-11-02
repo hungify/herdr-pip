@@ -52,6 +52,10 @@ export default defineConfig(
         },
     },
     {
+        files: ['src/prefs.ts'],
+        rules: {'@typescript-eslint/no-deprecated': 'off'},
+    },
+    {
         files: ['test/**/*.test.ts'],
         rules: {'@typescript-eslint/no-floating-promises': 'off'},
     },
