@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
 import {
-    herdrCommand,
+    herdrBase,
     isHerdrClient,
     parsePpid,
     newAttention,
@@ -131,15 +131,9 @@ test('summarize: errors', () => {
     assert.ok(!e.attention);
 });
 
-test('herdrCommand puts the session before the subcommand', () => {
-    assert.deepEqual(herdrCommand('/bin/herdr', '', 'agent', 'list'), ['/bin/herdr', 'agent', 'list']);
-    assert.deepEqual(herdrCommand('/bin/herdr', 'work', 'agent', 'focus', 'w7:p1'), [
-        '/bin/herdr',
-        '--session=work',
-        'agent',
-        'focus',
-        'w7:p1',
-    ]);
+test('herdrBase puts the session right after the binary', () => {
+    assert.deepEqual(herdrBase('/bin/herdr', ''), ['/bin/herdr']);
+    assert.deepEqual(herdrBase('/bin/herdr', 'work'), ['/bin/herdr', '--session=work']);
 });
 
 test('isHerdrClient: default session', () => {

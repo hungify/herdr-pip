@@ -1,7 +1,7 @@
 import Gio from 'gi://Gio';
 import GLib from 'gi://GLib';
 
-import {herdrCommand, summarize} from './herdr.ts';
+import {herdrBase, summarize} from './herdr.ts';
 import type {Summary} from './herdr.ts';
 
 const POLL_TIMEOUT_S = 10;
@@ -71,15 +71,18 @@ export class HerdrCli {
         if (this._poll) {
             return;
         }
-        const argv = this.command('agent', 'list');
-        if (!argv) {
+        const herdr = this.base();
+        if (!herdr) {
             this._onSummary(summarize({missing: true}));
             return;
         }
 
         let proc: Gio.Subprocess;
         try {
-            proc = Gio.Subprocess.new(argv, Gio.SubprocessFlags.STDOUT_PIPE | Gio.SubprocessFlags.STDERR_PIPE);
+            proc = Gio.Subprocess.new(
+                [...herdr, 'agent', 'list'],
+                Gio.SubprocessFlags.STDOUT_PIPE | Gio.SubprocessFlags.STDERR_PIPE,
+            );
         } catch (e) {
             this._onSummary(summarize({exitOk: false, stderr: errorMessage(e)}));
             return;
@@ -116,15 +119,15 @@ export class HerdrCli {
     }
 
     focus(paneId: string): FocusResult {
-        const argv = this.command('agent', 'focus', paneId);
-        if (!argv) {
+        const herdr = this.base();
+        if (!herdr) {
             return 'not-found';
         }
         let proc: Gio.Subprocess;
         try {
-            proc = Gio.Subprocess.new(argv, Gio.SubprocessFlags.STDOUT_SILENCE);
+            proc = Gio.Subprocess.new([...herdr, 'agent', 'focus', paneId], Gio.SubprocessFlags.STDOUT_SILENCE);
         } catch (e) {
-            console.error(`herdr-pip: failed to run ${argv[0] ?? '?'}: ${errorMessage(e)}`);
+            console.error(`herdr-pip: failed to run ${herdr[0] ?? '?'} agent focus: ${errorMessage(e)}`);
             return 'launch-failed';
         }
         this._procs.add(proc);
@@ -142,9 +145,9 @@ export class HerdrCli {
         return 'started';
     }
 
-    command(...args: string[]): string[] | null {
+    base(): string[] | null {
         const herdr = findHerdr();
-        return herdr !== null ? herdrCommand(herdr, this._session(), ...args) : null;
+        return herdr !== null ? herdrBase(herdr, this._session()) : null;
     }
 
     private _dropPoll(): void {
