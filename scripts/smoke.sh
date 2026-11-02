@@ -142,6 +142,15 @@ jq '(.result.agents[] | select(.pane_id == "wB:p1")).agent_status = "blocked"' "
 touch "$HOME/fake-event"
 wait_for "an event refreshes at once, without waiting for the slowed-down poll" '(.toast // "") | test("needs you")' 5
 
+wait_for "the toast goes away" '.toast == null' 12
+gsettings set org.gnome.desktop.notifications show-banners false
+jq '.result.agents[].agent_status = "done"' "$fixture" >"$HOME/fake-agent-list.json"
+touch "$HOME/fake-event"
+wait_for "during Do Not Disturb the badge still updates" '[.status.parts[] | "\(.count) \(.status)"] == ["3 done"]' 5
+sleep 1
+if [ "$(state | jq '.toast')" = null ]; then ok "but shows no toast"; else fail "but shows no toast" "$(state)"; fi
+gsettings set org.gnome.desktop.notifications show-banners true
+
 setting show-indicator false
 wait_for "the top bar icon can be turned off" '.indicator | not'
 setting show-indicator true

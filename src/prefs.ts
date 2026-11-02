@@ -17,6 +17,12 @@ const BADGE_MODES: readonly Choice[] = [
     ['never', N_('Never')],
 ];
 
+const SOUND_MODES: readonly Choice[] = [
+    ['blocked', N_('When an agent needs you')],
+    ['attention', N_('Blocked or done')],
+    ['never', N_('Never')],
+];
+
 function comboRow(
     settings: Gio.Settings,
     key: string,
@@ -133,11 +139,9 @@ function resetRow(settings: Gio.Settings, keys: readonly string[], title: string
 }
 
 export default class HerdrPipPreferences extends ExtensionPreferences {
-    // eslint-disable-next-line @typescript-eslint/no-deprecated
     override fillPreferencesWindow(window: Adw.PreferencesWindow): Promise<void> {
         const settings = this.getSettings();
         const page = new Adw.PreferencesPage();
-        // eslint-disable-next-line @typescript-eslint/no-deprecated
         window.add(page);
         window.set_default_size(620, 900);
 
@@ -201,6 +205,18 @@ export default class HerdrPipPreferences extends ExtensionPreferences {
             settings.bind('toast', row, 'sensitive', Gio.SettingsBindFlags.GET);
             toast.add(row);
         }
+
+        const sound = new Adw.PreferencesGroup({title: _('Sound and Do Not Disturb')});
+        page.add(sound);
+        sound.add(comboRow(settings, 'sound', _('Play a sound'), _('Uses the system sound theme'), SOUND_MODES));
+        sound.add(
+            switchRow(
+                settings,
+                'quiet-in-dnd',
+                _('Quiet during Do Not Disturb'),
+                _('No toasts or sounds; the badge still updates'),
+            ),
+        );
 
         const status = new Adw.PreferencesGroup({
             title: _('Herdr'),

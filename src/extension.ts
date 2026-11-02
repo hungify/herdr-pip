@@ -6,9 +6,9 @@ import Shell from 'gi://Shell';
 import {Extension, gettext as _} from 'resource:///org/gnome/shell/extensions/extension.js';
 import * as Main from 'resource:///org/gnome/shell/ui/main.js';
 
-import {badgeWanted, isPaneId, stampSince, toastAgents} from './herdr.ts';
+import {alertSound, badgeWanted, isPaneId, newAttention, stampSince, toastAgents} from './herdr.ts';
 import {ringEvents} from './ring.ts';
-import type {Summary} from './herdr.ts';
+import type {Agent, Summary} from './herdr.ts';
 import {APPEARANCE_KEYS} from './appearance.ts';
 import type {Appearance} from './appearance.ts';
 import {OverlayBadge} from './badge.ts';
@@ -21,6 +21,7 @@ import type {Position} from './placement.ts';
 
 const KEY_HOTKEY = 'menu-hotkey';
 const LIVE_POLL_S = 60;
+const SOUNDS = {blocked: 'dialog-warning', done: 'complete'} as const;
 const DBUS_PATH = '/io/github/hungify/HerdrPip';
 const DBUS_XML = `
 <node>
@@ -37,6 +38,7 @@ class HerdrPip {
     private _dbus: Gio.DBusExportedObject | null;
     private readonly _herdr: HerdrCli;
     private readonly _events: HerdrEvents;
+    private _notifications: Gio.Settings | null = new Gio.Settings({schema_id: 'org.gnome.desktop.notifications'});
     private readonly _badge: OverlayBadge;
     private readonly _cancellable = new Gio.Cancellable();
     private _indicator: StatusIndicator | null = null;
@@ -131,6 +133,7 @@ class HerdrPip {
         }
         this._events.destroy();
         this._herdr.destroy();
+        this._notifications = null;
         this._badge.destroy();
         this._indicator?.destroy();
         this._indicator = null;
@@ -162,12 +165,8 @@ class HerdrPip {
         } else {
             this._events.stop();
         }
-        if (summary.kind === 'agents' && this._settings.get_boolean('toast')) {
-            const enabled = {
-                done: this._settings.get_boolean('toast-done'),
-                blocked: this._settings.get_boolean('toast-blocked'),
-            };
-            this._badge.toast(toastAgents(prev, summary.agents, enabled), this._settings.get_uint('toast-seconds'));
+        if (summary.kind === 'agents' && !this._quiet()) {
+            this._alert(prev, summary.agents);
         }
         if (changed) {
             this._syncStatus();
@@ -175,6 +174,24 @@ class HerdrPip {
         if (summary.kind === 'agents') {
             this._badge.queueRing(ringEvents(prev, summary.agents));
         }
+    }
+
+    private _alert(prev: readonly Agent[] | null, agents: readonly Agent[]): void {
+        if (this._settings.get_boolean('toast')) {
+            const enabled = {
+                done: this._settings.get_boolean('toast-done'),
+                blocked: this._settings.get_boolean('toast-blocked'),
+            };
+            this._badge.toast(toastAgents(prev, agents, enabled), this._settings.get_uint('toast-seconds'));
+        }
+        const sound = alertSound(newAttention(prev, agents), this._settings.get_string('sound'));
+        if (sound) {
+            global.display.get_sound_player().play_from_theme(SOUNDS[sound], 'Herdr PiP', null);
+        }
+    }
+
+    private _quiet(): boolean {
+        return this._settings.get_boolean('quiet-in-dnd') && this._notifications?.get_boolean('show-banners') === false;
     }
 
     private readonly _onFocus: OnFocus = agent => {

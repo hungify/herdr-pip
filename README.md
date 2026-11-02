@@ -19,6 +19,8 @@ Status: works on GNOME Shell 50.6 (Fedora 44) with herdr 0.9.5.
 - **Toasts** next to the badge when an agent is done or blocked. Click one to jump to that agent.
 - **Live updates** from herdr's event stream on its API socket. Polling `herdr agent list` takes over (every
   `poll-interval` seconds) whenever the stream is not connected.
+- **Sound** from the system sound theme when an agent is blocked (optionally also when one is done). Toasts and
+  sounds stay quiet while GNOME's Do Not Disturb is on; the badge keeps updating.
 - Optional top bar icon. Settings: `gnome-extensions prefs herdr-pip@hungify`.
 - D-Bus `OpenMenu` / `Focus` for when a fullscreen app blocks the shortcut: `scripts/call.sh OpenMenu`.
 

@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: herdr-pip\n"
 "Report-Msgid-Bugs-To: https://github.com/hungify/herdr-pip/issues\n"
-"POT-Creation-Date: 2026-11-02 20:39+0700\n"
+"POT-Creation-Date: 2026-11-02 20:41+0700\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -101,6 +101,10 @@ msgid "Never"
 msgstr ""
 
 #: build/herdr-pip@hungify/prefs.js
+msgid "When an agent needs you"
+msgstr ""
+
+#: build/herdr-pip@hungify/prefs.js
 msgid "Agent menu shortcut (Enter to apply)"
 msgstr ""
 
@@ -127,11 +131,11 @@ msgid "Show the badge"
 msgstr ""
 
 #: build/herdr-pip@hungify/prefs.js
-msgid "Back to the top-right corner of the primary monitor"
+msgid "Position"
 msgstr ""
 
 #: build/herdr-pip@hungify/prefs.js
-msgid "Position"
+msgid "Back to the top-right corner of the primary monitor"
 msgstr ""
 
 #: build/herdr-pip@hungify/prefs.js
@@ -208,6 +212,26 @@ msgstr ""
 
 #: build/herdr-pip@hungify/prefs.js
 msgid "Stays for"
+msgstr ""
+
+#: build/herdr-pip@hungify/prefs.js
+msgid "Sound and Do Not Disturb"
+msgstr ""
+
+#: build/herdr-pip@hungify/prefs.js
+msgid "Play a sound"
+msgstr ""
+
+#: build/herdr-pip@hungify/prefs.js
+msgid "Uses the system sound theme"
+msgstr ""
+
+#: build/herdr-pip@hungify/prefs.js
+msgid "Quiet during Do Not Disturb"
+msgstr ""
+
+#: build/herdr-pip@hungify/prefs.js
+msgid "No toasts or sounds; the badge still updates"
 msgstr ""
 
 #: build/herdr-pip@hungify/prefs.js
