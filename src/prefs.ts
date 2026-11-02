@@ -204,7 +204,7 @@ export default class HerdrPipPreferences extends ExtensionPreferences {
 
         const status = new Adw.PreferencesGroup({
             title: _('Herdr'),
-            description: _('Polls "herdr agent list".'),
+            description: _('Follows herdr\'s event stream, and polls "herdr agent list" when it is not available.'),
         });
         page.add(status);
 
@@ -217,7 +217,9 @@ export default class HerdrPipPreferences extends ExtensionPreferences {
             settings.set_string('session', session.text.trim());
         });
         status.add(session);
-        status.add(spinRow(settings, 'poll-interval', _('Poll interval'), _('Seconds'), 1, 300));
+        status.add(
+            spinRow(settings, 'poll-interval', _('Poll interval'), _('Seconds, without the event stream'), 1, 300),
+        );
         status.add(switchRow(settings, 'show-indicator', _('Also show in the top bar')));
         return Promise.resolve();
     }

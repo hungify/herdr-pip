@@ -17,6 +17,8 @@ Status: works on GNOME Shell 50.6 (Fedora 44) with herdr 0.9.5.
   when the extension saw the change) and, when they span several projects, the project (last directory of the
   agent's working directory).
 - **Toasts** next to the badge when an agent is done or blocked. Click one to jump to that agent.
+- **Live updates** from herdr's event stream on its API socket. Polling `herdr agent list` takes over (every
+  `poll-interval` seconds) whenever the stream is not connected.
 - Optional top bar icon. Settings: `gnome-extensions prefs herdr-pip@hungify`.
 - D-Bus `OpenMenu` / `Focus` for when a fullscreen app blocks the shortcut: `scripts/call.sh OpenMenu`.
 
@@ -59,7 +61,7 @@ A running Shell cannot reload extension code, so develop against a throwaway tes
 | `pnpm check` | Format, lint, typecheck, unit tests, build. Same as CI |
 | `pnpm smoke` | End-to-end checks in a headless Shell with a fake herdr (~10 s) |
 | `pnpm dev` | Test Shell in a window, with your real `herdr` and a throwaway HOME |
-| `pnpm dev:fake` | Same, with `test/fake-herdr.sh` (blocked / done / working agents) |
+| `pnpm dev:fake` | Same, with `test/fake-herdr.sh` (blocked / done / working agents) and `test/fake-herdr-events.py` (event socket: `touch ~/fake-event`) |
 | `pnpm dev:headless` | No window. Drive it with `scripts/call.sh` and `scripts/testkit.sh` |
 | `pnpm format` | Format with oxfmt |
 | `pnpm run pack` | Build the extension zip into `dist/` |
