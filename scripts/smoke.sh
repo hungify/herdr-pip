@@ -98,6 +98,17 @@ call Focus wA:p1
 wait_file "Focus runs herdr agent focus" "$HOME/fake-focus.log" 'wA:p1'
 
 read -r x y <<<"$(badge_center)"
+testkit Click "$x" "$y" >/dev/null
+wait_for "clicking the badge opens the menu again" '.menuOpen'
+read -r ix iy <<<"$(state | jq -r '.menuItems[1] | "\(.[0]) \(.[1])"')"
+testkit Click "$ix" "$iy" >/dev/null
+wait_file "picking an agent in the menu focuses it" "$HOME/fake-focus.log" 'w7:pB'
+wait_for "and closes the menu without leaving a grab behind" '(.menuOpen | not) and (.stageGrab | not)'
+testkit Click 600 600 >/dev/null
+sleep 0.5
+wait_for "a click elsewhere afterwards does not reopen the menu" '.menuOpen | not'
+
+read -r x y <<<"$(badge_center)"
 testkit Drag "$x" "$y" 900 500 >/dev/null
 wait_for "dragging moves the badge and saves the position" \
     '.badgePosition[0] >= 0 and .badgePosition[0] < 0.6 and .menuOpen == false'

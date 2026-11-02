@@ -146,11 +146,11 @@ export class OverlayBadge {
             this._pressGrab ??= global.stage.grab(this._button);
             return Clutter.EVENT_PROPAGATE;
         });
-        this._connect(this._button, 'button-release-event', () => {
-            this._releasePressGrab();
-            if (this._menuPress) {
-                this._menuPress = null;
-                this._dragEnd();
+        // The release is caught on the way down: St.Button's click gesture takes it, so a plain click never
+        // reaches button-release-event, and a press grab left behind would send every later click to the badge.
+        this._connectEvent(this._button, 'captured-event', event => {
+            if (event.type() === Clutter.EventType.BUTTON_RELEASE) {
+                this._pressReleased();
             }
             return Clutter.EVENT_PROPAGATE;
         });
@@ -507,6 +507,14 @@ export class OverlayBadge {
         }
         this._dragUpdate(dx, dy);
         return Clutter.EVENT_STOP;
+    }
+
+    private _pressReleased(): void {
+        this._releasePressGrab();
+        if (this._menuPress) {
+            this._menuPress = null;
+            this._dragEnd();
+        }
     }
 
     private _releasePressGrab(): void {
