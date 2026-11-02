@@ -10,6 +10,8 @@ const a = (paneId: string, status: Status): Agent => ({
     status,
     statusLabel: '',
     focused: false,
+    project: '',
+    since: null,
 });
 
 test('ringEvents: transitions into working, done or blocked; quiet on the first poll', () => {

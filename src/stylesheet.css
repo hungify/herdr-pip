@@ -7,6 +7,19 @@
   background-color: #5e5c64;
 }
 
+.herdr-pip-project,
+.herdr-pip-age {
+  font-size: 0.85em;
+  opacity: 0.6;
+}
+.herdr-pip-project {
+  font-weight: bold;
+  padding-right: 6px;
+}
+.herdr-pip-age {
+  font-feature-settings: 'tnum';
+}
+
 .herdr-pip-blocked {
   background-color: #c01c28;
 }
@@ -54,6 +67,10 @@
 .herdr-pip-dot {
   border: 2px solid #ffffff;
   box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.5);
+}
+
+.herdr-pip-indicator-icon {
+  icon-size: 16px;
 }
 
 .herdr-pip-indicator-dot {

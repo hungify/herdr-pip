@@ -25,7 +25,7 @@ export class StatusIndicator {
             layout_manager: new Clutter.BinLayout(),
             y_align: Clutter.ActorAlign.CENTER,
         });
-        this._icon = new St.Icon({gicon: icon, style_class: 'system-status-icon'});
+        this._icon = new St.Icon({gicon: icon, style_class: 'herdr-pip-indicator-icon'});
         this._dot = new St.Widget({
             style_class: 'herdr-pip-indicator-dot',
             x_expand: true,
