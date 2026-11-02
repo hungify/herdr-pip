@@ -52,6 +52,11 @@ export default defineConfig(
         },
     },
     {
+        // GNOME Shell still hands prefs an Adw.PreferencesWindow, which libadwaita marks deprecated.
+        files: ['src/prefs.ts'],
+        rules: {'@typescript-eslint/no-deprecated': 'off'},
+    },
+    {
         files: ['test/**/*.test.ts'],
         rules: {'@typescript-eslint/no-floating-promises': 'off'},
     },

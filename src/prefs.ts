@@ -133,11 +133,9 @@ function resetRow(settings: Gio.Settings, keys: readonly string[], title: string
 }
 
 export default class HerdrPipPreferences extends ExtensionPreferences {
-    // eslint-disable-next-line @typescript-eslint/no-deprecated
     override fillPreferencesWindow(window: Adw.PreferencesWindow): Promise<void> {
         const settings = this.getSettings();
         const page = new Adw.PreferencesPage();
-        // eslint-disable-next-line @typescript-eslint/no-deprecated
         window.add(page);
         window.set_default_size(620, 900);
 
