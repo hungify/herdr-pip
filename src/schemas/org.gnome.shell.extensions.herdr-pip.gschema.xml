@@ -15,7 +15,7 @@
       <range min="1" max="300"/>
       <default>5</default>
       <summary>Seconds between agent status polls</summary>
-      <description>Each poll runs herdr agent list once.</description>
+      <description>Each poll runs herdr agent list once. While herdr's event stream is connected, changes are picked up as they happen and the poll only runs every 60 seconds (or this interval, if longer) to catch anything the stream does not report.</description>
     </key>
     <key name="show-indicator" type="b">
       <default>false</default>

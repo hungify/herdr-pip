@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: herdr-pip\n"
 "Report-Msgid-Bugs-To: https://github.com/hungify/herdr-pip/issues\n"
-"POT-Creation-Date: 2026-11-02 20:10+0700\n"
+"POT-Creation-Date: 2026-11-02 20:39+0700\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -215,7 +215,9 @@ msgid "Herdr"
 msgstr ""
 
 #: build/herdr-pip@hungify/prefs.js
-msgid "Polls \"herdr agent list\"."
+msgid ""
+"Follows herdr's event stream, and polls \"herdr agent list\" when it is not "
+"available."
 msgstr ""
 
 #: build/herdr-pip@hungify/prefs.js
@@ -224,6 +226,10 @@ msgstr ""
 
 #: build/herdr-pip@hungify/prefs.js
 msgid "Poll interval"
+msgstr ""
+
+#: build/herdr-pip@hungify/prefs.js
+msgid "Seconds, without the event stream"
 msgstr ""
 
 #: build/herdr-pip@hungify/prefs.js

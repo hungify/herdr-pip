@@ -339,3 +339,36 @@ export function durationText(ms: number): string {
     const hours = Math.floor(minutes / 60);
     return hours < 24 ? `${hours}h` : `${Math.floor(hours / 24)}d`;
 }
+
+export function parseSocketPath(statusOutput: string): string | null {
+    const path = /^socket:[ \t]*(\S.*)$/m.exec(statusOutput)?.[1]?.trim();
+    return path !== undefined && path !== '' ? path : null;
+}
+
+const PANE_EVENTS = ['pane.created', 'pane.closed', 'pane.exited', 'pane.agent_detected'];
+
+export function subscribeRequest(paneIds: readonly string[]): string {
+    const subscriptions = [
+        ...PANE_EVENTS.map(type => ({type})),
+        ...paneIds.toSorted().map(paneId => ({type: 'pane.agent_status_changed', pane_id: paneId})),
+    ];
+    return `${JSON.stringify({id: 'herdr-pip', method: 'events.subscribe', params: {subscriptions}})}\n`;
+}
+
+export type StreamLine = {kind: 'started'} | {kind: 'event'} | {kind: 'error'; message: string} | {kind: 'other'};
+
+export function parseStreamLine(line: string): StreamLine {
+    const value = parseJson(line);
+    if (!isRecord(value)) {
+        return {kind: 'other'};
+    }
+    if (typeof value['event'] === 'string') {
+        return {kind: 'event'};
+    }
+    const result = value['result'];
+    if (isRecord(result) && result['type'] === 'subscription_started') {
+        return {kind: 'started'};
+    }
+    const error = parseError(line);
+    return error ? {kind: 'error', message: `${error.code}: ${error.message}`} : {kind: 'other'};
+}

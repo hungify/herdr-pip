@@ -13,12 +13,14 @@ import {APPEARANCE_KEYS} from './appearance.ts';
 import type {Appearance} from './appearance.ts';
 import {OverlayBadge} from './badge.ts';
 import {HerdrCli} from './herdrCli.ts';
+import {HerdrEvents, promisifyEvents} from './herdrEvents.ts';
 import {findHerdrWindow, promisifyGio} from './herdrWindow.ts';
 import {StatusIndicator} from './indicator.ts';
 import type {OnFocus} from './menu.ts';
 import type {Position} from './placement.ts';
 
 const KEY_HOTKEY = 'menu-hotkey';
+const LIVE_POLL_S = 60;
 const DBUS_PATH = '/io/github/hungify/HerdrPip';
 const DBUS_XML = `
 <node>
@@ -34,6 +36,7 @@ class HerdrPip {
     private readonly _settingsIds: number[];
     private _dbus: Gio.DBusExportedObject | null;
     private readonly _herdr: HerdrCli;
+    private readonly _events: HerdrEvents;
     private readonly _badge: OverlayBadge;
     private readonly _cancellable = new Gio.Cancellable();
     private _indicator: StatusIndicator | null = null;
@@ -80,6 +83,15 @@ class HerdrPip {
                 this._onSummary(summary);
             },
         );
+        this._events = new HerdrEvents(
+            (...args) => this._herdr.command(...args),
+            () => {
+                this._herdr.refresh();
+            },
+            () => {
+                this._herdr.start(this._pollInterval(), false);
+            },
+        );
         this._syncIndicator();
 
         this._settingsIds = [
@@ -89,6 +101,7 @@ class HerdrPip {
             this._settings.connect('changed::session', () => {
                 this._summary = null;
                 this._badge.clearRing();
+                this._events.stop();
                 this._herdr.restart();
             }),
             this._settings.connect('changed::show-indicator', () => {
@@ -116,6 +129,7 @@ class HerdrPip {
         for (const id of this._settingsIds) {
             this._settings.disconnect(id);
         }
+        this._events.destroy();
         this._herdr.destroy();
         this._badge.destroy();
         this._indicator?.destroy();
@@ -143,6 +157,11 @@ class HerdrPip {
             polled.kind === 'agents' ? {...polled, agents: stampSince(prev, polled.agents, Date.now())} : polled;
         const changed = JSON.stringify(summary) !== JSON.stringify(this._summary);
         this._summary = summary;
+        if (summary.kind === 'agents') {
+            this._events.setPanes(summary.agents.map(a => a.paneId));
+        } else {
+            this._events.stop();
+        }
         if (summary.kind === 'agents' && this._settings.get_boolean('toast')) {
             const enabled = {
                 done: this._settings.get_boolean('toast-done'),
@@ -207,7 +226,8 @@ class HerdrPip {
     }
 
     private _pollInterval(): number {
-        return this._settings.get_uint('poll-interval');
+        const seconds = this._settings.get_uint('poll-interval');
+        return this._events.live ? Math.max(seconds, LIVE_POLL_S) : seconds;
     }
 
     private _syncIndicator(): void {
@@ -245,6 +265,7 @@ export default class HerdrPipExtension extends Extension {
 
     override enable(): void {
         promisifyGio();
+        promisifyEvents();
         this._pip = new HerdrPip(this);
     }
 
