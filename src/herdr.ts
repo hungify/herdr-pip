@@ -10,6 +10,8 @@ export interface Agent {
     title: string;
     paneId: string;
     focused: boolean;
+    project: string;
+    since: number | null;
 }
 
 interface StatusCount {
@@ -189,6 +191,8 @@ export function parseAgentList(text: string): Agent[] | null {
             title: firstText([r['title'], r['terminal_title_stripped'], r['terminal_title']], ''),
             paneId: str(r['pane_id'], ''),
             focused: r['focused'] === true,
+            project: basename(firstText([r['cwd'], r['foreground_cwd']], '').replace(/\/+$/, '')),
+            since: null,
         };
     });
 }
@@ -258,13 +262,13 @@ export function summaryText(summary: Summary, _: Gettext = untranslated): string
         case 'agents':
             return summary.parts.length
                 ? summary.parts.map(p => `${p.count} ${statusName(p.status, _)}`).join(' · ')
-                : _('No agents');
+                : _('No agents running');
         case 'offline':
             return _('Herdr is not running');
         case 'missing':
-            return _('herdr not found');
+            return _('herdr command not found');
         case 'waiting':
-            return _('Waiting for the first poll');
+            return _('Checking Herdr…');
         case 'error':
             return summary.message;
     }
@@ -301,4 +305,37 @@ export function toastAgents(
 
 export function pickHerdrWindow<T>(windows: readonly T[], title: (window: T) => string | null): T | null {
     return windows.find(w => /herdr/i.test(title(w) ?? '')) ?? windows[0] ?? null;
+}
+
+export function stampSince(prev: readonly Agent[] | null, agents: readonly Agent[], now: number): Agent[] {
+    if (!prev) {
+        return agents.map(a => ({...a, since: null}));
+    }
+    const before = new Map(prev.map(a => [a.paneId, a]));
+    return agents.map(a => {
+        const old = before.get(a.paneId);
+        return {...a, since: old?.status === a.status ? old.since : now};
+    });
+}
+
+export function menuOrder(agents: readonly Agent[]): Agent[] {
+    const rank = (a: Agent): number => STATUSES.indexOf(a.status);
+    const since = (a: Agent): number => a.since ?? 0;
+    return agents.toSorted((a, b) => rank(a) - rank(b) || since(a) - since(b));
+}
+
+export function showProjects(agents: readonly Agent[]): boolean {
+    return new Set(agents.map(a => a.project).filter(p => p !== '')).size > 1;
+}
+
+export function durationText(ms: number): string {
+    const minutes = Math.floor(ms / 60_000);
+    if (minutes < 1) {
+        return '<1m';
+    }
+    if (minutes < 60) {
+        return `${minutes}m`;
+    }
+    const hours = Math.floor(minutes / 60);
+    return hours < 24 ? `${hours}h` : `${Math.floor(hours / 24)}d`;
 }

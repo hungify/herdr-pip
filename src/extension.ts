@@ -6,7 +6,7 @@ import Shell from 'gi://Shell';
 import {Extension, gettext as _} from 'resource:///org/gnome/shell/extensions/extension.js';
 import * as Main from 'resource:///org/gnome/shell/ui/main.js';
 
-import {badgeWanted, isPaneId, toastAgents} from './herdr.ts';
+import {badgeWanted, isPaneId, stampSince, toastAgents} from './herdr.ts';
 import {ringEvents} from './ring.ts';
 import type {Summary} from './herdr.ts';
 import {APPEARANCE_KEYS} from './appearance.ts';
@@ -137,9 +137,11 @@ class HerdrPip {
         this._focusAgent(paneId);
     }
 
-    private _onSummary(summary: Summary): void {
-        const changed = JSON.stringify(summary) !== JSON.stringify(this._summary);
+    private _onSummary(polled: Summary): void {
         const prev = this._summary?.kind === 'agents' ? this._summary.agents : null;
+        const summary =
+            polled.kind === 'agents' ? {...polled, agents: stampSince(prev, polled.agents, Date.now())} : polled;
+        const changed = JSON.stringify(summary) !== JSON.stringify(this._summary);
         this._summary = summary;
         if (summary.kind === 'agents' && this._settings.get_boolean('toast')) {
             const enabled = {

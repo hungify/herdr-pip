@@ -19,6 +19,10 @@ import {
     pickHerdrWindow,
     isPaneId,
     windowOwner,
+    stampSince,
+    menuOrder,
+    showProjects,
+    durationText,
 } from '../src/herdr.ts';
 import type {Agent, Status} from '../src/herdr.ts';
 
@@ -35,6 +39,8 @@ test('parseAgentList reads the captured list', () => {
         title: 'Example task 2',
         paneId: 'wA:p1',
         focused: true,
+        project: 'example',
+        since: null,
     });
     assert.deepEqual(countByStatus(agents), {blocked: 0, done: 1, working: 2, idle: 0, unknown: 0});
 });
@@ -104,7 +110,7 @@ test('summarize: only working is not attention', () => {
 test('summarize: empty list', () => {
     const s = summarize({exitOk: true, stdout: '{"result":{"agents":[]}}'});
     assert.equal(s.kind, 'agents');
-    assert.equal(summaryText(s), 'No agents');
+    assert.equal(summaryText(s), 'No agents running');
 });
 
 test('summarize: errors', () => {
@@ -204,6 +210,8 @@ const agent = (paneId: string, status: Status): Agent => ({
     status,
     statusLabel: status,
     focused: false,
+    project: '',
+    since: null,
 });
 
 test('newAttention: only transitions into blocked or done', () => {
@@ -245,8 +253,8 @@ test('summarize: error fallbacks', () => {
 });
 
 test('summaryText for every kind and the quiet statuses', () => {
-    assert.equal(summaryText(summarize({missing: true})), 'herdr not found');
-    assert.equal(summaryText(WAITING), 'Waiting for the first poll');
+    assert.equal(summaryText(summarize({missing: true})), 'herdr command not found');
+    assert.equal(summaryText(WAITING), 'Checking Herdr…');
     const quiet = '{"result":{"agents":[{"agent_status":"idle"},{"agent_status":"bogus"}]}}';
     assert.equal(summaryText(summarize({exitOk: true, stdout: quiet})), '1 idle · 1 unknown');
 });
@@ -278,4 +286,55 @@ test('pickHerdrWindow prefers a window titled herdr, else the first, untitled on
     assert.equal(pickHerdrWindow([zsh, herdr], windowTitle), herdr);
     assert.equal(pickHerdrWindow([untitled, zsh], windowTitle), untitled);
     assert.equal(pickHerdrWindow([], windowTitle), null);
+});
+
+const list = (fields: string): string => `{"result":{"agents":[{${fields}}]}}`;
+const stamped = (a: Agent, since: number | null): Agent => ({...a, since});
+const at = (paneId: string, status: Status, since: number | null): Agent => stamped(agent(paneId, status), since);
+const in_ = (project: string): Agent => ({...agent('p', 'idle'), project});
+
+test('parseAgentList: project is the last directory of cwd', () => {
+    assert.equal(parseAgentList(list('"cwd":"/home/u/code/api/"'))?.[0]?.project, 'api');
+    assert.equal(parseAgentList(list('"foreground_cwd":"/srv/web"'))?.[0]?.project, 'web');
+    assert.equal(parseAgentList(list('"agent":"claude"'))?.[0]?.project, '');
+});
+
+test('stampSince: keeps the time while the status holds, stamps changes and new panes', () => {
+    assert.deepEqual(stampSince(null, [agent('p1', 'done')], 50), [stamped(agent('p1', 'done'), null)], 'first poll');
+    const prev = [stamped(agent('p1', 'done'), 10), stamped(agent('p2', 'working'), null)];
+    assert.deepEqual(stampSince(prev, [agent('p1', 'done'), agent('p2', 'blocked'), agent('p3', 'idle')], 50), [
+        stamped(agent('p1', 'done'), 10),
+        stamped(agent('p2', 'blocked'), 50),
+        stamped(agent('p3', 'idle'), 50),
+    ]);
+});
+
+test('menuOrder: by status, then longest waiting, then herdr order', () => {
+    const order = menuOrder([
+        at('w', 'working', 1),
+        at('d', 'done', 5),
+        at('b2', 'blocked', 30),
+        at('i', 'idle', null),
+        at('b1', 'blocked', 20),
+        at('b0', 'blocked', null),
+        at('b3', 'blocked', 30),
+    ]);
+    assert.deepEqual(
+        order.map(a => a.paneId),
+        ['b0', 'b1', 'b2', 'b3', 'd', 'w', 'i'],
+    );
+});
+
+test('showProjects: only when agents span several projects', () => {
+    assert.equal(showProjects([in_('api'), in_('api')]), false);
+    assert.equal(showProjects([in_('api'), in_('')]), false);
+    assert.equal(showProjects([in_('api'), in_('web')]), true);
+});
+
+test('durationText', () => {
+    assert.equal(durationText(30_000), '<1m');
+    assert.equal(durationText(4 * 60_000 + 59_000), '4m');
+    assert.equal(durationText(59 * 60_000), '59m');
+    assert.equal(durationText(2 * 3_600_000 + 1), '2h');
+    assert.equal(durationText(3 * 86_400_000), '3d');
 });
