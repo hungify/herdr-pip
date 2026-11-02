@@ -86,7 +86,7 @@ class HerdrPip {
             },
         );
         this._events = new HerdrEvents(
-            (...args) => this._herdr.command(...args),
+            () => this._herdr.base(),
             () => {
                 this._herdr.refresh();
             },

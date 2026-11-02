@@ -23,7 +23,7 @@ export function promisifyEvents(): void {
 }
 
 export class HerdrEvents {
-    private readonly _argv: (...args: string[]) => string[] | null;
+    private readonly _base: () => string[] | null;
     private readonly _onEvent: () => void;
     private readonly _onLive: (live: boolean) => void;
     private _panes: string[] | null = null;
@@ -33,8 +33,8 @@ export class HerdrEvents {
     private _retryS = RETRY_MIN_S;
     private _warned = false;
 
-    constructor(argv: (...args: string[]) => string[] | null, onEvent: () => void, onLive: (live: boolean) => void) {
-        this._argv = argv;
+    constructor(base: () => string[] | null, onEvent: () => void, onLive: (live: boolean) => void) {
+        this._base = base;
         this._onEvent = onEvent;
         this._onLive = onLive;
     }
@@ -119,11 +119,14 @@ export class HerdrEvents {
     }
 
     private async _status(cancellable: Gio.Cancellable): Promise<string> {
-        const argv = this._argv('status', 'server');
-        if (!argv) {
+        const herdr = this._base();
+        if (!herdr) {
             throw new Error('herdr not found');
         }
-        const proc = Gio.Subprocess.new(argv, Gio.SubprocessFlags.STDOUT_PIPE | Gio.SubprocessFlags.STDERR_SILENCE);
+        const proc = Gio.Subprocess.new(
+            [...herdr, 'status', 'server'],
+            Gio.SubprocessFlags.STDOUT_PIPE | Gio.SubprocessFlags.STDERR_SILENCE,
+        );
         let killId = GLib.timeout_add_seconds(GLib.PRIORITY_DEFAULT, STATUS_TIMEOUT_S, () => {
             killId = 0;
             proc.force_exit();
