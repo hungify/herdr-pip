@@ -90,11 +90,23 @@ wait_for "OpenMenu again closes it" '.menuOpen | not'
 read -r x y <<<"$(badge_center)"
 testkit Click "$x" "$y" >/dev/null
 wait_for "a real click on the badge opens the menu" '.menuOpen'
-call OpenMenu
-wait_for "menu closed again" '.menuOpen | not'
+testkit Click "$x" "$y" >/dev/null
+sleep 0.5
+wait_for "a second click closes it and leaves the badge in place" '(.menuOpen | not) and .badgePosition == [-1, -1]'
 
 call Focus wA:p1
 wait_file "Focus runs herdr agent focus" "$HOME/fake-focus.log" 'wA:p1'
+
+read -r x y <<<"$(badge_center)"
+testkit Click "$x" "$y" >/dev/null
+wait_for "clicking the badge opens the menu again" '.menuOpen'
+read -r ix iy <<<"$(state | jq -r '.menuItems[1] | "\(.[0]) \(.[1])"')"
+testkit Click "$ix" "$iy" >/dev/null
+wait_file "picking an agent in the menu focuses it" "$HOME/fake-focus.log" 'w7:pB'
+wait_for "and closes the menu without leaving a grab behind" '(.menuOpen | not) and (.stageGrab | not)'
+testkit Click 600 600 >/dev/null
+sleep 0.5
+wait_for "a click elsewhere afterwards does not reopen the menu" '.menuOpen | not'
 
 read -r x y <<<"$(badge_center)"
 testkit Drag "$x" "$y" 900 500 >/dev/null
@@ -103,6 +115,16 @@ wait_for "dragging moves the badge and saves the position" \
 setting badge-position '(-1.0, -1.0)'
 setting badge-monitor "''"
 wait_for "resetting the position puts it back in the corner" '.badgePosition == [-1, -1]'
+
+call OpenMenu
+wait_for "menu open before dragging" '.menuOpen'
+read -r x y <<<"$(badge_center)"
+testkit Drag "$x" "$y" 900 500 >/dev/null
+wait_for "dragging with the menu open closes it and moves the badge" \
+    '.badgePosition[0] >= 0 and .badgePosition[0] < 0.6 and .menuOpen == false'
+setting badge-position '(-1.0, -1.0)'
+setting badge-monitor "''"
+wait_for "position reset again" '.badgePosition == [-1, -1]'
 
 jq '(.result.agents[] | select(.agent_status == "working")).agent_status = "done"' "$fixture" \
     >"$HOME/fake-agent-list.json"
