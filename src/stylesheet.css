@@ -56,6 +56,11 @@
   box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.5);
 }
 
+/* Not system-status-icon: in a lone panel button the theme pads that class to 36px wide. */
+.herdr-pip-indicator-icon {
+  icon-size: 16px;
+}
+
 .herdr-pip-indicator-dot {
   width: 6px;
   height: 6px;
