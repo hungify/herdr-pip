@@ -18,6 +18,7 @@ interface PipInternals {
         _actor: {visible: boolean; get_position(): [number, number]};
         _button: {width: number; has_style_class_name(name: string): boolean};
         _menu: {isOpen: boolean};
+        _agents: {section: {_getMenuItems(): Clutter.Actor[]}};
         _toast: {visible: boolean};
         _toastLabel: {text: string};
     };
@@ -198,6 +199,11 @@ class Testkit {
             badgeInactive: badge._button.has_style_class_name('herdr-pip-inactive'),
             badgeRect: [...badge._actor.get_position(), badge._button.width],
             menuOpen: badge._menu.isOpen,
+            menuItems: badge._agents.section._getMenuItems().map(item => {
+                const [x, y] = item.get_transformed_position();
+                return [x + item.width / 2, y + item.height / 2];
+            }),
+            stageGrab: global.stage.get_grab_actor() !== null,
             toast: badge._toast.visible ? badge._toastLabel.text : null,
             badgePosition: pip._settings.get_value('badge-position').deepUnpack(),
             focus: describe(global.display.focus_window),
