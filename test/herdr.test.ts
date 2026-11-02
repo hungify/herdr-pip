@@ -2,7 +2,6 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
 import {
-    herdrBase,
     isHerdrClient,
     parsePpid,
     newAttention,
@@ -129,11 +128,6 @@ test('summarize: errors', () => {
     assert.match(e.message, /^agent_not_found: /);
     assert.equal(summarize({exitOk: false, stderr: 'segfault\n'}).message, 'segfault');
     assert.ok(!e.attention);
-});
-
-test('herdrBase puts the session right after the binary', () => {
-    assert.deepEqual(herdrBase('/bin/herdr', ''), ['/bin/herdr']);
-    assert.deepEqual(herdrBase('/bin/herdr', 'work'), ['/bin/herdr', '--session=work']);
 });
 
 test('isHerdrClient: default session', () => {

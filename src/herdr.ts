@@ -69,10 +69,6 @@ function firstText(values: readonly unknown[], fallback: string): string {
     return fallback;
 }
 
-export function herdrBase(herdrPath: string, session: string): string[] {
-    return session ? [herdrPath, `--session=${session}`] : [herdrPath];
-}
-
 export function isPaneId(paneId: string): boolean {
     return /^[^-\s]\S*$/.test(paneId);
 }
