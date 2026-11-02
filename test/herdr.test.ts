@@ -104,7 +104,7 @@ test('summarize: only working is not attention', () => {
 test('summarize: empty list', () => {
     const s = summarize({exitOk: true, stdout: '{"result":{"agents":[]}}'});
     assert.equal(s.kind, 'agents');
-    assert.equal(summaryText(s), 'No agents');
+    assert.equal(summaryText(s), 'No agents running');
 });
 
 test('summarize: errors', () => {
@@ -245,8 +245,8 @@ test('summarize: error fallbacks', () => {
 });
 
 test('summaryText for every kind and the quiet statuses', () => {
-    assert.equal(summaryText(summarize({missing: true})), 'herdr not found');
-    assert.equal(summaryText(WAITING), 'Waiting for the first poll');
+    assert.equal(summaryText(summarize({missing: true})), 'herdr command not found');
+    assert.equal(summaryText(WAITING), 'Checking Herdr…');
     const quiet = '{"result":{"agents":[{"agent_status":"idle"},{"agent_status":"bogus"}]}}';
     assert.equal(summaryText(summarize({exitOk: true, stdout: quiet})), '1 idle · 1 unknown');
 });

@@ -258,13 +258,13 @@ export function summaryText(summary: Summary, _: Gettext = untranslated): string
         case 'agents':
             return summary.parts.length
                 ? summary.parts.map(p => `${p.count} ${statusName(p.status, _)}`).join(' · ')
-                : _('No agents');
+                : _('No agents running');
         case 'offline':
             return _('Herdr is not running');
         case 'missing':
-            return _('herdr not found');
+            return _('herdr command not found');
         case 'waiting':
-            return _('Waiting for the first poll');
+            return _('Checking Herdr…');
         case 'error':
             return summary.message;
     }
