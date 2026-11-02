@@ -86,7 +86,8 @@ class HerdrPip {
             },
         );
         this._events = new HerdrEvents(
-            () => this._herdr.base(),
+            () => this._herdr.binary(),
+            () => this._herdr.session(),
             () => {
                 this._herdr.refresh();
             },

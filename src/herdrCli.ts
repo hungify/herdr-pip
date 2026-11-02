@@ -1,7 +1,7 @@
 import Gio from 'gi://Gio';
 import GLib from 'gi://GLib';
 
-import {herdrBase, summarize} from './herdr.ts';
+import {summarize} from './herdr.ts';
 import type {Summary} from './herdr.ts';
 
 const POLL_TIMEOUT_S = 10;
@@ -71,16 +71,17 @@ export class HerdrCli {
         if (this._poll) {
             return;
         }
-        const herdr = this.base();
-        if (!herdr) {
+        const herdr = this.binary();
+        if (herdr === null) {
             this._onSummary(summarize({missing: true}));
             return;
         }
 
+        const session = this._session();
         let proc: Gio.Subprocess;
         try {
             proc = Gio.Subprocess.new(
-                [...herdr, 'agent', 'list'],
+                [herdr, ...(session !== '' ? [`--session=${session}`] : []), 'agent', 'list'],
                 Gio.SubprocessFlags.STDOUT_PIPE | Gio.SubprocessFlags.STDERR_PIPE,
             );
         } catch (e) {
@@ -119,13 +120,17 @@ export class HerdrCli {
     }
 
     focus(paneId: string): FocusResult {
-        const herdr = this.base();
-        if (!herdr) {
+        const herdr = this.binary();
+        if (herdr === null) {
             return 'not-found';
         }
+        const session = this._session();
         let proc: Gio.Subprocess;
         try {
-            proc = Gio.Subprocess.new([...herdr, 'agent', 'focus', paneId], Gio.SubprocessFlags.STDOUT_SILENCE);
+            proc = Gio.Subprocess.new(
+                [herdr, ...(session !== '' ? [`--session=${session}`] : []), 'agent', 'focus', paneId],
+                Gio.SubprocessFlags.STDOUT_SILENCE,
+            );
         } catch (e) {
             console.error(`herdr-pip: failed to run ${herdr[0] ?? '?'} agent focus: ${errorMessage(e)}`);
             return 'launch-failed';
@@ -145,9 +150,12 @@ export class HerdrCli {
         return 'started';
     }
 
-    base(): string[] | null {
-        const herdr = findHerdr();
-        return herdr !== null ? herdrBase(herdr, this._session()) : null;
+    binary(): string | null {
+        return findHerdr();
+    }
+
+    session(): string {
+        return this._session();
     }
 
     private _dropPoll(): void {
