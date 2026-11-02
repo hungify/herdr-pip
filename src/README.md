@@ -6,7 +6,8 @@ Tested on GNOME Shell 50.6.
 Pure modules (no `gi://` imports, unit-tested under node):
 
 - `herdr.ts` Herdr output parsing (`agent list`, errors) into a `Summary`, the herdr command line,
-  herdr client detection from `/proc/PID/cmdline`, `/proc/PID/stat` parsing, toast text.
+  herdr client detection from `/proc/PID/cmdline`, `/proc/PID/stat` parsing, toast text, the event stream's
+  subscribe request and lines, which alert sound to play.
 - `appearance.ts` the badge look: color parsing, label, inline style, ring size and colors, the appearance
   settings keys.
 - `ring.ts` the progress ring: status changes queued and shown one at a time, and the arcs to draw at a given
@@ -19,6 +20,9 @@ Shell modules:
   to the parts below. Picking an agent runs `herdr agent focus <pane>` and raises the herdr window.
 - `herdrCli.ts` every herdr process: finds the binary (PATH, then `~/.local/bin`), polls `agent list`,
   fires `agent focus`.
+- `herdrEvents.ts` herdr's event stream: the socket path from `herdr status server`, one `events.subscribe` per
+  connection (pane events plus each agent's status; a new pane set reconnects). Events carry no state: each one
+  triggers a poll, and while the stream is live the poll timer slows to 60 s. Reconnects with backoff.
 - `herdrWindow.ts` the terminal window hosting the herdr client for the configured session: each client process
   walked up to the process that owns a window; a window titled "herdr" wins, then the most recently used.
 - `badge.ts` the floating "H" circle with its progress ring (animated with a `Clutter.Timeline` only while

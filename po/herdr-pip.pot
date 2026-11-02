@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: herdr-pip\n"
 "Report-Msgid-Bugs-To: https://github.com/hungify/herdr-pip/issues\n"
-"POT-Creation-Date: 2026-11-02 12:10+0700\n"
+"POT-Creation-Date: 2026-11-02 14:11+0700\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -98,6 +98,10 @@ msgstr ""
 
 #: build/herdr-pip@hungify/prefs.js
 msgid "Never"
+msgstr ""
+
+#: build/herdr-pip@hungify/prefs.js
+msgid "When an agent needs you"
 msgstr ""
 
 #: build/herdr-pip@hungify/prefs.js
@@ -211,11 +215,33 @@ msgid "Stays for"
 msgstr ""
 
 #: build/herdr-pip@hungify/prefs.js
+msgid "Sound and Do Not Disturb"
+msgstr ""
+
+#: build/herdr-pip@hungify/prefs.js
+msgid "Play a sound"
+msgstr ""
+
+#: build/herdr-pip@hungify/prefs.js
+msgid "Uses the system sound theme"
+msgstr ""
+
+#: build/herdr-pip@hungify/prefs.js
+msgid "Quiet during Do Not Disturb"
+msgstr ""
+
+#: build/herdr-pip@hungify/prefs.js
+msgid "No toasts or sounds; the badge still updates"
+msgstr ""
+
+#: build/herdr-pip@hungify/prefs.js
 msgid "Herdr"
 msgstr ""
 
 #: build/herdr-pip@hungify/prefs.js
-msgid "Polls \"herdr agent list\"."
+msgid ""
+"Follows herdr's event stream, and polls \"herdr agent list\" when it is not "
+"available."
 msgstr ""
 
 #: build/herdr-pip@hungify/prefs.js
@@ -224,6 +250,10 @@ msgstr ""
 
 #: build/herdr-pip@hungify/prefs.js
 msgid "Poll interval"
+msgstr ""
+
+#: build/herdr-pip@hungify/prefs.js
+msgid "Seconds, without the event stream"
 msgstr ""
 
 #: build/herdr-pip@hungify/prefs.js

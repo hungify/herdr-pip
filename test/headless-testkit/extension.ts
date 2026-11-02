@@ -14,6 +14,7 @@ interface PipInternals {
     _settings: Gio.Settings;
     _summary: {kind: string; parts: unknown; message: string} | null;
     _indicator: unknown;
+    _events: {live: boolean};
     _badge: {
         _actor: {visible: boolean; get_position(): [number, number]};
         _button: {width: number; has_style_class_name(name: string): boolean};
@@ -195,6 +196,7 @@ class Testkit {
                 message: pip._summary.message,
             },
             indicator: pip._indicator !== null,
+            live: pip._events.live,
             badgeVisible: badge._actor.visible,
             badgeInactive: badge._button.has_style_class_name('herdr-pip-inactive'),
             badgeRect: [...badge._actor.get_position(), badge._button.width],

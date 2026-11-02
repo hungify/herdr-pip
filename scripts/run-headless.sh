@@ -30,7 +30,7 @@ if [ -z "${HERDR_PIP_INNER:-}" ]; then
 
     env -i HOME="$home" USER="$USER" PATH="$home/.local/bin:/usr/local/bin:/usr/bin:/bin" \
         LANG="${LANG:-C.UTF-8}" XDG_RUNTIME_DIR="$XDG_RUNTIME_DIR" TERM="${TERM:-xterm}" \
-        HERDR_PIP_SETTINGS="${HERDR_PIP_SETTINGS:-}" HERDR_PIP_DEVKIT="${HERDR_PIP_DEVKIT:-}" HERDR_PIP_MONITORS="${HERDR_PIP_MONITORS:-}" \
+        HERDR_PIP_SETTINGS="${HERDR_PIP_SETTINGS:-}" HERDR_PIP_FAKE_HERDR="${HERDR_PIP_FAKE_HERDR:-}" HERDR_PIP_DEVKIT="${HERDR_PIP_DEVKIT:-}" HERDR_PIP_MONITORS="${HERDR_PIP_MONITORS:-}" \
         HERDR_PIP_HOST_WAYLAND="${WAYLAND_DISPLAY:-}" HERDR_PIP_INNER=1 dbus-run-session -- "${BASH_SOURCE[0]}" "$@"
     exit $?
 fi
@@ -43,6 +43,11 @@ for kv in show-indicator=true ${HERDR_PIP_SETTINGS:-}; do
 done
 
 log="$HOME/shell.log"
+if [ -n "${HERDR_PIP_FAKE_HERDR:-}" ]; then
+    # The outer cleanup stops it with everything else running under this HOME.
+    python3 -I "$REPO_ROOT/test/fake-herdr-events.py" "$HOME/fake-herdr.sock" &
+    echo $! >"$HOME/fake-events.pid"
+fi
 display="herdr-pip-$$"
 if [ -n "${HERDR_PIP_DEVKIT:-}" ]; then
     [ -x /usr/libexec/mutter-devkit ] || command -v mutter-devkit >/dev/null ||

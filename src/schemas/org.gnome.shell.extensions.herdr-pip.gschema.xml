@@ -15,7 +15,7 @@
       <range min="1" max="300"/>
       <default>5</default>
       <summary>Seconds between agent status polls</summary>
-      <description>Each poll runs herdr agent list once.</description>
+      <description>Each poll runs herdr agent list once. While herdr's event stream is connected, changes are picked up as they happen and the poll only runs every 60 seconds (or this interval, if longer) to catch anything the stream does not report.</description>
     </key>
     <key name="show-indicator" type="b">
       <default>false</default>
@@ -58,6 +58,21 @@
       <range min="2" max="60"/>
       <default>6</default>
       <summary>How long a toast stays</summary>
+    </key>
+    <key name="sound" type="s">
+      <choices>
+        <choice value="never"/>
+        <choice value="blocked"/>
+        <choice value="attention"/>
+      </choices>
+      <default>'blocked'</default>
+      <summary>When to play a sound</summary>
+      <description>"blocked" plays the theme's warning sound when an agent needs you; "attention" also plays the completion sound when one is done. Follows GNOME's system sound settings.</description>
+    </key>
+    <key name="quiet-in-dnd" type="b">
+      <default>true</default>
+      <summary>No toasts or sounds during Do Not Disturb</summary>
+      <description>While GNOME's Do Not Disturb is on, skip toasts and sounds. The badge, ring and dot still update.</description>
     </key>
     <key name="badge-size" type="u">
       <range min="24" max="96"/>

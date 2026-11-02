@@ -16,6 +16,10 @@ import {
     WAITING,
     badgeWanted,
     toastAgents,
+    parseSocketPath,
+    subscribeRequest,
+    parseStreamLine,
+    alertSound,
     pickHerdrWindow,
     isPaneId,
     windowOwner,
@@ -278,4 +282,51 @@ test('pickHerdrWindow prefers a window titled herdr, else the first, untitled on
     assert.equal(pickHerdrWindow([zsh, herdr], windowTitle), herdr);
     assert.equal(pickHerdrWindow([untitled, zsh], windowTitle), untitled);
     assert.equal(pickHerdrWindow([], windowTitle), null);
+});
+
+test('parseSocketPath: reads the socket line of herdr status server', () => {
+    const out = 'status: running\nversion: 0.9.5\nsocket: /home/u/.config/herdr/herdr.sock\n';
+    assert.equal(parseSocketPath(out), '/home/u/.config/herdr/herdr.sock');
+    assert.equal(parseSocketPath('status: not running\nsocket: /a b/herdr.sock'), '/a b/herdr.sock');
+    assert.equal(parseSocketPath('status: running\n'), null);
+    assert.equal(parseSocketPath('socket:   \n'), null);
+});
+
+test('subscribeRequest: pane events plus a status subscription per pane, one JSON line', () => {
+    const line = subscribeRequest(['w2:p1', 'w1:p3']);
+    assert.ok(line.endsWith('\n'));
+    const req = JSON.parse(line) as {method: string; params: {subscriptions: {type: string; pane_id?: string}[]}};
+    assert.equal(req.method, 'events.subscribe');
+    assert.deepEqual(
+        req.params.subscriptions.filter(s => s.type === 'pane.agent_status_changed').map(s => s.pane_id),
+        ['w1:p3', 'w2:p1'],
+    );
+    assert.ok(req.params.subscriptions.some(s => s.type === 'pane.agent_detected'));
+    const empty = JSON.parse(subscribeRequest([])) as {params: {subscriptions: unknown[]}};
+    assert.equal(empty.params.subscriptions.length, 4);
+});
+
+test('parseStreamLine: ack, events, errors', () => {
+    assert.deepEqual(parseStreamLine('{"id":"herdr-pip","result":{"type":"subscription_started"}}'), {kind: 'started'});
+    assert.deepEqual(
+        parseStreamLine('{"event":"pane.agent_status_changed","data":{"pane_id":"w1:p1","agent_status":"done"}}'),
+        {kind: 'event'},
+    );
+    assert.deepEqual(parseStreamLine('{"id":"x","error":{"code":"invalid_request","message":"bad"}}'), {
+        kind: 'error',
+        message: 'invalid_request: bad',
+    });
+    assert.deepEqual(parseStreamLine('not json'), {kind: 'other'});
+    assert.deepEqual(parseStreamLine('{"id":"x","result":{"type":"pong"}}'), {kind: 'other'});
+});
+
+test('alertSound: blocked wins, done only in attention mode', () => {
+    const blocked = agent('p1', 'blocked');
+    const done = agent('p2', 'done');
+    assert.equal(alertSound([done, blocked], 'blocked'), 'blocked');
+    assert.equal(alertSound([done], 'blocked'), null);
+    assert.equal(alertSound([done], 'attention'), 'done');
+    assert.equal(alertSound([done, blocked], 'attention'), 'blocked');
+    assert.equal(alertSound([blocked], 'never'), null);
+    assert.equal(alertSound([], 'attention'), null);
 });

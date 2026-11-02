@@ -126,9 +126,28 @@ setting badge-position '(-1.0, -1.0)'
 setting badge-monitor "''"
 wait_for "position reset again" '.badgePosition == [-1, -1]'
 
+wait_for "the event stream is live" '.live'
+grep -qF '"pane_id":"wB:p1"' "$HOME/fake-subscribe.log" && ok "it subscribes to each agent's status" ||
+    fail "it subscribes to each agent's status" "$(cat "$HOME/fake-subscribe.log")"
+
+# While the stream is live the poll slows to 60 s, so these changes only show up quickly through an event.
 jq '(.result.agents[] | select(.agent_status == "working")).agent_status = "done"' "$fixture" \
     >"$HOME/fake-agent-list.json"
-wait_for "an agent that becomes done shows a toast" '(.toast // "") | test("is done")'
+touch "$HOME/fake-event"
+wait_for "an agent that becomes done shows a toast" '(.toast // "") | test("is done")' 5
+jq '(.result.agents[] | select(.pane_id == "wB:p1")).agent_status = "blocked"' "$fixture" \
+    >"$HOME/fake-agent-list.json"
+touch "$HOME/fake-event"
+wait_for "an event refreshes at once, without waiting for the slowed-down poll" '(.toast // "") | test("needs you")' 5
+
+wait_for "the toast goes away" '.toast == null' 12
+gsettings set org.gnome.desktop.notifications show-banners false
+jq '.result.agents[].agent_status = "done"' "$fixture" >"$HOME/fake-agent-list.json"
+touch "$HOME/fake-event"
+wait_for "during Do Not Disturb the badge still updates" '[.status.parts[] | "\(.count) \(.status)"] == ["3 done"]' 5
+sleep 1
+[ "$(state | jq '.toast')" = null ] && ok "but shows no toast" || fail "but shows no toast" "$(state)"
+gsettings set org.gnome.desktop.notifications show-banners true
 
 setting show-indicator false
 wait_for "the top bar icon can be turned off" '.indicator | not'
@@ -137,9 +156,13 @@ wait_for "and on again" '.indicator'
 
 herdr_link="$(readlink "$HOME/.local/bin/herdr")"
 rm "$HOME/.local/bin/herdr"
+kill "$(cat "$HOME/fake-events.pid")"
+wait_for "a closed event stream falls back to polling" '.live | not'
 wait_for "without herdr the status is missing and the badge is grey" '.status.kind == "missing" and .badgeInactive'
 ln -s "$herdr_link" "$HOME/.local/bin/herdr"
+python3 -I "$REPO_ROOT/test/fake-herdr-events.py" "$HOME/fake-herdr.sock" &
 wait_for "with herdr back the agents return in color" '.status.kind == "agents" and (.badgeInactive | not)'
+wait_for "and the event stream reconnects" '.live'
 
 for _ in 1 2 3 4 5; do
     extension Disable

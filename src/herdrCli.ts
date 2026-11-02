@@ -25,6 +25,7 @@ export class HerdrCli {
     private _sourceId = 0;
     private _poll: Gio.Subprocess | null = null;
     private _killId = 0;
+    private _again = false;
 
     constructor(session: () => string, onSummary: (summary: Summary) => void) {
         this._session = session;
@@ -41,16 +42,28 @@ export class HerdrCli {
         this._procs.clear();
     }
 
-    start(seconds: number): void {
+    start(seconds: number, pollNow = true): void {
         this._stopTimer();
         this._sourceId = GLib.timeout_add_seconds(GLib.PRIORITY_DEFAULT, seconds, () => {
             this.poll();
             return GLib.SOURCE_CONTINUE;
         });
+        if (pollNow) {
+            this.poll();
+        }
+    }
+
+    // Poll for an event: a poll already running may have read the list before the change, so run one more after it.
+    refresh(): void {
+        if (this._poll) {
+            this._again = true;
+            return;
+        }
         this.poll();
     }
 
     restart(): void {
+        this._again = false;
         this._dropPoll();
         this.poll();
     }
@@ -59,7 +72,7 @@ export class HerdrCli {
         if (this._poll) {
             return;
         }
-        const argv = this._argv('agent', 'list');
+        const argv = this.command('agent', 'list');
         if (!argv) {
             this._onSummary(summarize({missing: true}));
             return;
@@ -96,11 +109,15 @@ export class HerdrCli {
             this._clearKill();
             this._poll = null;
             this._onSummary(summary);
+            if (this._again) {
+                this._again = false;
+                this.poll();
+            }
         });
     }
 
     focus(paneId: string): FocusResult {
-        const argv = this._argv('agent', 'focus', paneId);
+        const argv = this.command('agent', 'focus', paneId);
         if (!argv) {
             return 'not-found';
         }
@@ -126,7 +143,7 @@ export class HerdrCli {
         return 'started';
     }
 
-    private _argv(...args: string[]): string[] | null {
+    command(...args: string[]): string[] | null {
         const herdr = findHerdr();
         return herdr !== null ? herdrCommand(herdr, this._session(), ...args) : null;
     }

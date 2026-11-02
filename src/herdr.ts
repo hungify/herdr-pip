@@ -302,3 +302,49 @@ export function toastAgents(
 export function pickHerdrWindow<T>(windows: readonly T[], title: (window: T) => string | null): T | null {
     return windows.find(w => /herdr/i.test(title(w) ?? '')) ?? windows[0] ?? null;
 }
+
+export function parseSocketPath(statusOutput: string): string | null {
+    const path = /^socket:[ \t]*(\S.*)$/m.exec(statusOutput)?.[1]?.trim();
+    return path !== undefined && path !== '' ? path : null;
+}
+
+const PANE_EVENTS = ['pane.created', 'pane.closed', 'pane.exited', 'pane.agent_detected'];
+
+// One events.subscribe per connection: herdr closes the socket on a second request, so a new pane set means a
+// new connection. Status changes can only be subscribed per pane.
+export function subscribeRequest(paneIds: readonly string[]): string {
+    const subscriptions = [
+        ...PANE_EVENTS.map(type => ({type})),
+        ...paneIds.toSorted().map(paneId => ({type: 'pane.agent_status_changed', pane_id: paneId})),
+    ];
+    return `${JSON.stringify({id: 'herdr-pip', method: 'events.subscribe', params: {subscriptions}})}\n`;
+}
+
+export type StreamLine = {kind: 'started'} | {kind: 'event'} | {kind: 'error'; message: string} | {kind: 'other'};
+
+export function parseStreamLine(line: string): StreamLine {
+    const value = parseJson(line);
+    if (!isRecord(value)) {
+        return {kind: 'other'};
+    }
+    if (typeof value['event'] === 'string') {
+        return {kind: 'event'};
+    }
+    const result = value['result'];
+    if (isRecord(result) && result['type'] === 'subscription_started') {
+        return {kind: 'started'};
+    }
+    const error = parseError(line);
+    return error ? {kind: 'error', message: `${error.code}: ${error.message}`} : {kind: 'other'};
+}
+
+// The sound for agents that just turned blocked or done: blocked wins, done only in "attention" mode.
+export function alertSound(fresh: readonly Agent[], mode: string): 'blocked' | 'done' | null {
+    if (mode === 'never') {
+        return null;
+    }
+    if (fresh.some(a => a.status === 'blocked')) {
+        return 'blocked';
+    }
+    return mode === 'attention' && fresh.some(a => a.status === 'done') ? 'done' : null;
+}

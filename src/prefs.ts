@@ -17,6 +17,12 @@ const BADGE_MODES: readonly Choice[] = [
     ['never', N_('Never')],
 ];
 
+const SOUND_MODES: readonly Choice[] = [
+    ['blocked', N_('When an agent needs you')],
+    ['attention', N_('Blocked or done')],
+    ['never', N_('Never')],
+];
+
 function comboRow(
     settings: Gio.Settings,
     key: string,
@@ -200,9 +206,21 @@ export default class HerdrPipPreferences extends ExtensionPreferences {
             toast.add(row);
         }
 
+        const sound = new Adw.PreferencesGroup({title: _('Sound and Do Not Disturb')});
+        page.add(sound);
+        sound.add(comboRow(settings, 'sound', _('Play a sound'), _('Uses the system sound theme'), SOUND_MODES));
+        sound.add(
+            switchRow(
+                settings,
+                'quiet-in-dnd',
+                _('Quiet during Do Not Disturb'),
+                _('No toasts or sounds; the badge still updates'),
+            ),
+        );
+
         const status = new Adw.PreferencesGroup({
             title: _('Herdr'),
-            description: _('Polls "herdr agent list".'),
+            description: _('Follows herdr\'s event stream, and polls "herdr agent list" when it is not available.'),
         });
         page.add(status);
 
@@ -215,7 +233,9 @@ export default class HerdrPipPreferences extends ExtensionPreferences {
             settings.set_string('session', session.text.trim());
         });
         status.add(session);
-        status.add(spinRow(settings, 'poll-interval', _('Poll interval'), _('Seconds'), 1, 300));
+        status.add(
+            spinRow(settings, 'poll-interval', _('Poll interval'), _('Seconds, without the event stream'), 1, 300),
+        );
         status.add(switchRow(settings, 'show-indicator', _('Also show in the top bar')));
         return Promise.resolve();
     }
