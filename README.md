@@ -12,7 +12,10 @@ Status: works on GNOME Shell 50.6 (Fedora 44) with herdr 0.9.5.
   green fill: done, red pulse: blocked) and a dot shows that an agent is blocked (red) or done (green). Drag it
   anywhere, also to another monitor. It turns grey when herdr is not running, not found or fails.
 - **Agent menu**: click the badge or press `Super+Shift+H`. Picking an agent runs `herdr agent focus <pane>` and
-  raises the terminal window where your herdr client runs. No terminal is launched.
+  raises the terminal window where your herdr client runs. No terminal is launched. Agents are listed blocked first,
+  then done, working and idle, the longest waiting first, with how long each has been in its status (counted from
+  when the extension saw the change) and, when they span several projects, the project (last directory of the
+  agent's working directory).
 - **Toasts** next to the badge when an agent is done or blocked. Click one to jump to that agent.
 - **Sound** from the system sound theme when an agent is blocked (optionally also when one is done). Toasts and
   sounds stay quiet while GNOME's Do Not Disturb is on; the badge keeps updating.

@@ -30,7 +30,8 @@ Shell modules:
   monitor it is dropped on, by default the primary one).
 - `indicator.ts` the optional top bar icon (`icons/herdr-pip-symbolic.svg`, recolored by the theme) with the
   attention dot and the same agent menu plus Settings.
-- `menu.ts` the agent menu shared by the badge and the indicator.
+- `menu.ts` the agent menu shared by the badge and the indicator. Its order, project labels and times come from
+  `menuOrder`, `showProjects` and `stampSince` in `herdr.ts`; the times are refreshed each time the menu opens.
 - `prefs.ts` the settings window (separate process).
 
 Settings are documented in `schemas/org.gnome.shell.extensions.herdr-pip.gschema.xml`.

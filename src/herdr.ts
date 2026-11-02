@@ -10,6 +10,10 @@ export interface Agent {
     title: string;
     paneId: string;
     focused: boolean;
+    // Last directory of the agent's working directory, to tell agents of different projects apart.
+    project: string;
+    // When this extension saw the agent enter its status (ms since the epoch); null when it was already in it.
+    since: number | null;
 }
 
 interface StatusCount {
@@ -189,6 +193,8 @@ export function parseAgentList(text: string): Agent[] | null {
             title: firstText([r['title'], r['terminal_title_stripped'], r['terminal_title']], ''),
             paneId: str(r['pane_id'], ''),
             focused: r['focused'] === true,
+            project: basename(firstText([r['cwd'], r['foreground_cwd']], '').replace(/\/+$/, '')),
+            since: null,
         };
     });
 }
@@ -347,4 +353,42 @@ export function alertSound(fresh: readonly Agent[], mode: string): 'blocked' | '
         return 'blocked';
     }
     return mode === 'attention' && fresh.some(a => a.status === 'done') ? 'done' : null;
+}
+
+// Carries over when each agent entered its status. herdr reports no times, so a change is stamped when it is
+// first seen; agents already in their status at the first poll stay null. A new pane counts as a change.
+export function stampSince(prev: readonly Agent[] | null, agents: readonly Agent[], now: number): Agent[] {
+    if (!prev) {
+        return agents.map(a => ({...a, since: null}));
+    }
+    const before = new Map(prev.map(a => [a.paneId, a]));
+    return agents.map(a => {
+        const old = before.get(a.paneId);
+        return {...a, since: old?.status === a.status ? old.since : now};
+    });
+}
+
+// Menu order: blocked, done, working, idle, unknown; within a status the longest waiting first (unknown times
+// count as oldest), then herdr's order.
+export function menuOrder(agents: readonly Agent[]): Agent[] {
+    const rank = (a: Agent): number => STATUSES.indexOf(a.status);
+    const since = (a: Agent): number => a.since ?? 0;
+    return agents.toSorted((a, b) => rank(a) - rank(b) || since(a) - since(b));
+}
+
+// Projects are only worth showing when the agents span more than one.
+export function showProjects(agents: readonly Agent[]): boolean {
+    return new Set(agents.map(a => a.project).filter(p => p !== '')).size > 1;
+}
+
+export function durationText(ms: number): string {
+    const minutes = Math.floor(ms / 60_000);
+    if (minutes < 1) {
+        return '<1m';
+    }
+    if (minutes < 60) {
+        return `${minutes}m`;
+    }
+    const hours = Math.floor(minutes / 60);
+    return hours < 24 ? `${hours}h` : `${Math.floor(hours / 24)}d`;
 }
